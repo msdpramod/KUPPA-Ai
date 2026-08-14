@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: kuppa_ai
+      POSTGRES_USER: kuppa
+      POSTGRES_PASSWORD: kuppa_dev
+    ports: ["5432:5432"]
+    volumes: ["kuppa_pg:/var/lib/postgresql/data"]
+  app:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/kuppa_ai
+      DB_USER: kuppa
+      DB_PASSWORD: kuppa_dev
+    ports: ["8080:8080"]
+    depends_on: [postgres]
+volumes:
+  kuppa_pg:

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>KUPPA AI</title>
+  <style>
+    body{font-family:system-ui,-apple-system,sans-serif;max-width:900px;margin:40px auto;padding:0 16px;background:#0d1117;color:#e6edf3}
+    .card{background:#161b22;border:1px solid #30363d;border-radius:14px;padding:18px;margin:14px 0}
+    textarea{width:100%;min-height:110px;box-sizing:border-box;background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:10px;padding:12px}
+    button{border:0;border-radius:9px;padding:10px 14px;margin:5px;cursor:pointer;font-weight:650}.primary{background:#238636;color:white}.danger{background:#da3633;color:white}.neutral{background:#30363d;color:white}
+    code{white-space:pre-wrap}.muted{color:#8b949e}.status{font-weight:700}
+  </style>
+</head>
+<body>
+<h1>KUPPA AI</h1><p class="muted">Think like me. Act only with my approval.</p>
+<div class="card"><textarea id="message" placeholder="Tell KUPPA AI what you want..."></textarea><br/><button class="primary" onclick="chat()">Send</button></div>
+<div id="reply"></div><h2>Approval Inbox</h2><div id="actions"></div>
+<script>
+async function req(url,opts={}){const r=await fetch(url,{headers:{'Content-Type':'application/json'},...opts});const j=await r.json();if(!r.ok)throw new Error(j.error||'Request failed');return j}
+async function chat(){try{const message=document.getElementById('message').value;const r=await req('/api/chat',{method:'POST',body:JSON.stringify({message})});document.getElementById('reply').innerHTML=`<div class="card"><b>KUPPA AI</b><p>${esc(r.message)}</p></div>`;load()}catch(e){alert(e.message)}}
+async function decision(id,op){try{await req(`/api/actions/${id}/${op}`,{method:'POST'});load()}catch(e){alert(e.message)}}
+async function load(){const a=await req('/api/actions');document.getElementById('actions').innerHTML=a.map(x=>`<div class="card"><div class="status">${esc(x.status)} · ${esc(x.riskLevel)}</div><h3>${esc(x.summary)}</h3><p>${esc(x.reason)}</p><code>${esc(x.payload)}</code><div>${x.status==='PENDING_APPROVAL'?`<button class="primary" onclick="decision('${x.id}','approve')">Approve</button><button class="danger" onclick="decision('${x.id}','reject')">Reject</button>`:''}${x.status==='APPROVED'?`<button class="neutral" onclick="decision('${x.id}','execute')">Execute approved action</button>`:''}</div></div>`).join('')||'<p class="muted">No proposed actions.</p>'}
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+load();
+</script>
+</body></html>
