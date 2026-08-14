@@ -2,6 +2,7 @@ package ai.kuppa.chat;
 
 import ai.kuppa.action.ProposedAction;
 import ai.kuppa.action.ProposedActionRepository;
+import ai.kuppa.adaptive.AdaptivePersonaService;
 import ai.kuppa.audit.AuditService;
 import ai.kuppa.memory.PersonaMemoryRepository;
 import ai.kuppa.planner.Plan;
@@ -16,19 +17,24 @@ public class ChatService {
     private final ProposedActionRepository actionRepository;
     private final Planner planner;
     private final AuditService audit;
+    private final AdaptivePersonaService adaptivePersonaService;
 
     public ChatService(ChatMessageRepository chatRepository, PersonaMemoryRepository memoryRepository,
-                       ProposedActionRepository actionRepository, Planner planner, AuditService audit) {
+                       ProposedActionRepository actionRepository, Planner planner, AuditService audit,
+                       AdaptivePersonaService adaptivePersonaService) {
         this.chatRepository = chatRepository;
         this.memoryRepository = memoryRepository;
         this.actionRepository = actionRepository;
         this.planner = planner;
         this.audit = audit;
+        this.adaptivePersonaService = adaptivePersonaService;
     }
 
     @Transactional
     public ChatResponse chat(String message) {
         chatRepository.save(new ChatMessage("USER", message));
+        adaptivePersonaService.observeUserMessage(message);
+
         Plan plan = planner.plan(message, memoryRepository.findByActiveTrueOrderByCreatedAtDesc());
         ProposedAction action = null;
         if (plan.hasAction()) {
