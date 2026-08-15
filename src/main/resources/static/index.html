@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>KUPPA AI</title>
   <style>
-    :root{color-scheme:dark}*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;margin:0;min-height:100vh;background:radial-gradient(circle at top,#18202b,#0d1117 58%);color:#e6edf3;display:flex;align-items:center;justify-content:center;padding:24px}.shell{width:min(760px,100%);text-align:center}.muted{color:#8b949e}.avatar-stage{height:470px;display:flex;align-items:flex-end;justify-content:center;position:relative;border-radius:26px;background:linear-gradient(180deg,#111827,#0d1117);overflow:hidden;border:1px solid #30363d;box-shadow:0 24px 70px rgba(0,0,0,.35)}.halo{position:absolute;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(88,166,255,.2),transparent 68%);top:34px;animation:breathe 4s ease-in-out infinite}.person{position:relative;width:230px;height:360px;transform-origin:50% 100%;animation:idle 5s ease-in-out infinite}.head{position:absolute;left:49px;top:18px;width:132px;height:162px;border-radius:48% 48% 44% 44%/42% 42% 58% 58%;background:linear-gradient(145deg,#d8a47f,#b97855)}.hair{position:absolute;left:45px;top:8px;width:140px;height:72px;border-radius:70px 70px 28px 28px;background:#171717}.ear{position:absolute;top:75px;width:20px;height:38px;border-radius:50%;background:#bd805f}.ear.left{left:39px}.ear.right{right:39px}.eye{position:absolute;top:75px;width:24px;height:10px;border-radius:50%;background:#f6f2ea;overflow:hidden}.eye.left{left:77px}.eye.right{right:77px}.pupil{width:8px;height:8px;border-radius:50%;background:#20140f;margin:1px auto}.brow{position:absolute;top:61px;width:30px;height:5px;border-radius:8px;background:#38251b}.brow.left{left:72px}.brow.right{right:72px}.nose{position:absolute;left:108px;top:96px;width:14px;height:24px;border-left:2px solid rgba(92,48,30,.38);border-bottom:2px solid rgba(92,48,30,.25)}.mouth{position:absolute;left:96px;top:128px;width:38px;height:8px;border-radius:0 0 22px 22px;background:#6d2d2d}.neck{position:absolute;left:91px;top:160px;width:48px;height:50px;background:#b97855}.torso{position:absolute;left:27px;top:196px;width:176px;height:170px;border-radius:55px 55px 20px 20px;background:linear-gradient(145deg,#243247,#131c2a)}.chest-mark{position:absolute;left:92px;top:238px;width:46px;height:46px;border-radius:50%;border:2px solid #58a6ff;box-shadow:0 0 24px rgba(88,166,255,.45)}.person.listening .head{animation:nod 1.1s ease-in-out infinite}.person.thinking .pupil{transform:translateX(4px)}.person.speaking .mouth{animation:talk .18s ease-in-out infinite alternate}.status{margin:18px 0 10px;font-weight:800}.transcript{min-height:84px;padding:16px 18px;border:1px solid #30363d;border-radius:18px;background:rgba(22,27,34,.9);font-size:1.08rem;line-height:1.55;text-align:left}.start{margin-top:16px;border:0;border-radius:999px;padding:14px 22px;background:#238636;color:white;font-weight:800;cursor:pointer}.start.active{background:#1f6feb}.approval{margin-top:18px;text-align:left}.approval-card{background:#161b22;border:1px solid #30363d;border-radius:14px;padding:14px;margin-top:10px}.approval-card button{border:0;border-radius:9px;padding:9px 12px;margin-right:8px;font-weight:700;cursor:pointer}.approve{background:#238636;color:#fff}.reject{background:#da3633;color:#fff}@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes breathe{0%,100%{transform:scale(.96);opacity:.65}50%{transform:scale(1.04);opacity:1}}@keyframes nod{0%,100%{transform:rotate(0)}50%{transform:rotate(2deg)}}@keyframes talk{from{height:6px;transform:scaleX(.85)}to{height:20px;transform:scaleX(1.08)}}
+    :root{color-scheme:dark}*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;margin:0;min-height:100vh;background:radial-gradient(circle at top,#18202b,#0d1117 58%);color:#e6edf3;display:flex;align-items:center;justify-content:center;padding:24px}.shell{width:min(760px,100%);text-align:center}.muted{color:#8b949e}.avatar-stage{height:470px;display:flex;align-items:flex-end;justify-content:center;position:relative;border-radius:26px;background:linear-gradient(180deg,#111827,#0d1117);overflow:hidden;border:1px solid #30363d;box-shadow:0 24px 70px rgba(0,0,0,.35)}.halo{position:absolute;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(88,166,255,.2),transparent 68%);top:34px;animation:breathe 4s ease-in-out infinite}.person{position:relative;width:230px;height:360px;transform-origin:50% 100%;animation:idle 5s ease-in-out infinite}.head{position:absolute;left:49px;top:18px;width:132px;height:162px;border-radius:48% 48% 44% 44%/42% 42% 58% 58%;background:linear-gradient(145deg,#d8a47f,#b97855)}.hair{position:absolute;left:45px;top:8px;width:140px;height:72px;border-radius:70px 70px 28px 28px;background:#171717}.ear{position:absolute;top:75px;width:20px;height:38px;border-radius:50%;background:#bd805f}.ear.left{left:39px}.ear.right{right:39px}.eye{position:absolute;top:75px;width:24px;height:10px;border-radius:50%;background:#f6f2ea;overflow:hidden}.eye.left{left:77px}.eye.right{right:77px}.pupil{width:8px;height:8px;border-radius:50%;background:#20140f;margin:1px auto}.brow{position:absolute;top:61px;width:30px;height:5px;border-radius:8px;background:#38251b}.brow.left{left:72px}.brow.right{right:72px}.nose{position:absolute;left:108px;top:96px;width:14px;height:24px;border-left:2px solid rgba(92,48,30,.38);border-bottom:2px solid rgba(92,48,30,.25)}.mouth{position:absolute;left:96px;top:128px;width:38px;height:8px;border-radius:0 0 22px 22px;background:#6d2d2d}.neck{position:absolute;left:91px;top:160px;width:48px;height:50px;background:#b97855}.torso{position:absolute;left:27px;top:196px;width:176px;height:170px;border-radius:55px 55px 20px 20px;background:linear-gradient(145deg,#243247,#131c2a)}.chest-mark{position:absolute;left:92px;top:238px;width:46px;height:46px;border-radius:50%;border:2px solid #58a6ff;box-shadow:0 0 24px rgba(88,166,255,.45)}.person.listening .head{animation:nod 1.1s ease-in-out infinite}.person.thinking .pupil{transform:translateX(4px)}.person.speaking .mouth{animation:talk .18s ease-in-out infinite alternate}.status{margin:18px 0 10px;font-weight:800}.transcript{min-height:84px;padding:16px 18px;border:1px solid #30363d;border-radius:18px;background:rgba(22,27,34,.9);font-size:1.08rem;line-height:1.55;text-align:left}.start{margin-top:16px;border:0;border-radius:999px;padding:14px 24px;background:#238636;color:white;font-weight:800;cursor:pointer;min-width:190px}.start.active{background:#da3633}.approval{margin-top:18px;text-align:left}.approval-card{background:#161b22;border:1px solid #30363d;border-radius:14px;padding:14px;margin-top:10px}.approval-card button{border:0;border-radius:9px;padding:9px 12px;margin-right:8px;font-weight:700;cursor:pointer}.approve{background:#238636;color:#fff}.reject{background:#da3633;color:#fff}@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes breathe{0%,100%{transform:scale(.96);opacity:.65}50%{transform:scale(1.04);opacity:1}}@keyframes nod{0%,100%{transform:rotate(0)}50%{transform:rotate(2deg)}}@keyframes talk{from{height:6px;transform:scaleX(.85)}to{height:20px;transform:scaleX(1.08)}}
   </style>
 </head>
 <body>
@@ -17,8 +17,8 @@
     <div class="person" id="avatar"><div class="hair"></div><div class="ear left"></div><div class="ear right"></div><div class="head"></div><div class="brow left"></div><div class="brow right"></div><div class="eye left"><div class="pupil"></div></div><div class="eye right"><div class="pupil"></div></div><div class="nose"></div><div class="mouth"></div><div class="neck"></div><div class="torso"></div><div class="chest-mark"></div></div>
   </div>
   <div class="status" id="status">Ready</div>
-  <div class="transcript" id="transcript">Press Start conversation once, allow microphone access, and speak naturally.</div>
-  <button class="start" id="startButton" onclick="startConversation()">Start conversation</button>
+  <div class="transcript" id="transcript">Press Start conversation, allow microphone access, and speak naturally.</div>
+  <button class="start" id="startButton" onclick="toggleConversation()">Start conversation</button>
   <div class="approval" id="approvals"></div>
 </div>
 <script>
@@ -30,19 +30,27 @@ if(SpeechRecognition){
   recognition=new SpeechRecognition();recognition.continuous=false;recognition.interimResults=true;recognition.lang=navigator.language||'en-IN';
   recognition.onstart=()=>{listening=true;setState('listening','Listening…')};
   recognition.onresult=e=>{let text='';let final=false;for(let i=e.resultIndex;i<e.results.length;i++){text+=e.results[i][0].transcript;if(e.results[i].isFinal)final=true}transcript.textContent='You: '+text;if(final&&!busy){recognition.stop();ask(text)}};
-  recognition.onerror=e=>{if(e.error!=='aborted'){setState('','I did not catch that');if(active)setTimeout(listen,700)}};
+  recognition.onerror=e=>{if(e.error!=='aborted'&&active){setState('','I did not catch that');setTimeout(listen,700)}};
   recognition.onend=()=>{listening=false;if(active&&!busy&&statusEl.textContent!=='Speaking…')setTimeout(listen,350)};
 }else{startButton.disabled=true;transcript.textContent='This browser does not support speech recognition. Use Chrome or another compatible browser.'}
 
+function toggleConversation(){active?endConversation():startConversation()}
+
 function startConversation(){
-  active=true;startButton.textContent='Conversation active';startButton.classList.add('active');
-  window.speechSynthesis?.cancel();listen();
+  active=true;startButton.textContent='End conversation';startButton.classList.add('active');
+  transcript.textContent='KUPPA: I am listening.';window.speechSynthesis?.cancel();listen();
+}
+
+function endConversation(){
+  active=false;busy=false;recognition?.stop();window.speechSynthesis?.cancel();
+  startButton.textContent='Start conversation';startButton.classList.remove('active');
+  setState('','Conversation ended');transcript.textContent='KUPPA: Conversation ended. Press Start conversation when you want to talk again.';
 }
 
 function listen(){if(!active||busy||listening||!recognition)return;try{recognition.start()}catch(e){}}
 
 async function ask(message){
-  const clean=(message||'').trim();if(!clean||busy)return;busy=true;setState('thinking','Thinking…');
+  const clean=(message||'').trim();if(!clean||busy||!active)return;busy=true;setState('thinking','Thinking…');
   try{
     const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:clean})});
     const data=await r.json();if(!r.ok)throw new Error(data.error||'Request failed');
@@ -51,7 +59,7 @@ async function ask(message){
   finally{busy=false;if(active)setTimeout(listen,350)}
 }
 
-function speak(text){return new Promise(resolve=>{if(!('speechSynthesis' in window)){resolve();return}window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=navigator.language||'en-IN';u.rate=.98;u.pitch=1;u.onend=resolve;u.onerror=resolve;window.speechSynthesis.speak(u)})}
+function speak(text){return new Promise(resolve=>{if(!active||!('speechSynthesis' in window)){resolve();return}window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=navigator.language||'en-IN';u.rate=.98;u.pitch=1;u.onend=resolve;u.onerror=resolve;window.speechSynthesis.speak(u)})}
 
 function setState(cls,label){avatar.className='person'+(cls?' '+cls:'');statusEl.textContent=label}
 
@@ -60,7 +68,7 @@ async function loadApprovals(){
 }
 
 async function decide(id,op){busy=true;recognition?.stop();try{await fetch(`/api/actions/${id}/${op}`,{method:'POST'});const line=op==='approve'?'Approved. I will only execute when you explicitly request execution.':'Rejected.';transcript.textContent='KUPPA: '+line;setState('speaking','Speaking…');await speak(line);await loadApprovals()}finally{busy=false;if(active)setTimeout(listen,350)}}
-function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function escapeHtml(s){return String(s??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]))}
 loadApprovals();
 </script>
 </body>
