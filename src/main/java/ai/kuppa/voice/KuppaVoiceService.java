@@ -2,6 +2,7 @@ package ai.kuppa.voice;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class KuppaVoiceService {
     private final double lengthScale;
     private final double noiseScale;
     private final double noiseWScale;
+    private final boolean enabled;
     private final boolean autoStart;
     private final String pythonCommand;
     private final int serverPort;
@@ -41,6 +43,7 @@ public class KuppaVoiceService {
             @Value("${kuppa.voice.length-scale:1.04}") double lengthScale,
             @Value("${kuppa.voice.noise-scale:0.55}") double noiseScale,
             @Value("${kuppa.voice.noise-w-scale:0.72}") double noiseWScale,
+            @Value("${kuppa.voice.enabled:true}") boolean enabled,
             @Value("${kuppa.voice.auto-start:true}") boolean autoStart,
             @Value("${kuppa.voice.python-command:python3}") String pythonCommand,
             @Value("${kuppa.voice.port:5000}") int serverPort) {
@@ -49,6 +52,7 @@ public class KuppaVoiceService {
         this.lengthScale = lengthScale;
         this.noiseScale = noiseScale;
         this.noiseWScale = noiseWScale;
+        this.enabled = enabled;
         this.autoStart = autoStart;
         this.pythonCommand = pythonCommand;
         this.serverPort = serverPort;
@@ -58,7 +62,24 @@ public class KuppaVoiceService {
         this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
     }
 
+    @PostConstruct
+    public void warmUpOnStartup() {
+        if (!enabled || !autoStart) return;
+        Thread starter = new Thread(() -> {
+            try {
+                ensureVoiceEngine();
+            } catch (Exception e) {
+                lastStartupError = rootMessage(e);
+            }
+        }, "kuppa-voice-warmup");
+        starter.setDaemon(true);
+        starter.start();
+    }
+
     public byte[] synthesize(String text) {
+        if (!enabled) {
+            throw new VoiceUnavailableException("KUPPA neural voice is disabled by configuration");
+        }
         if (text == null || text.isBlank()) {
             throw new IllegalArgumentException("Text is required");
         }
@@ -101,12 +122,15 @@ public class KuppaVoiceService {
     }
 
     private void ensureVoiceEngine() {
+        if (!enabled) {
+            throw new VoiceUnavailableException("KUPPA neural voice is disabled by configuration");
+        }
         if (isReachable()) return;
         if (!autoStart) {
             throw new VoiceUnavailableException("Piper is offline at " + infoUri + " and auto-start is disabled");
         }
         startPiperIfNeeded();
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15);
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20);
         while (System.nanoTime() < deadline) {
             if (isReachable()) return;
             if (piperProcess != null && !piperProcess.isAlive()) break;
@@ -179,6 +203,7 @@ public class KuppaVoiceService {
 
     public Map<String, Object> status() {
         Map<String, Object> result = new LinkedHashMap<>();
+        result.put("enabled", enabled);
         result.put("configuredVoice", voice);
         result.put("endpoint", synthesizeUri.toString());
         result.put("autoStart", autoStart);
