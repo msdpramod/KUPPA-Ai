@@ -6,7 +6,7 @@
 :root{color-scheme:dark;--cyan:#7be8ff;--panel:rgba(9,18,29,.84);--line:rgba(123,232,255,.18)}*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,sans-serif;background:radial-gradient(circle at 50% -15%,#213a52,#081019 48%,#030609);color:#eefbff;display:flex;justify-content:center;padding:24px}.shell{width:min(900px,100%);text-align:center}.brand{letter-spacing:.16em;font-size:clamp(30px,4vw,46px);margin:5px 0}.muted{color:#9bb3bf}.stage{height:590px;border:1px solid var(--line);border-radius:34px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 24%,rgba(123,232,255,.14),transparent 30%),linear-gradient(180deg,#122233,#050a10);box-shadow:0 34px 90px rgba(0,0,0,.48)}.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(123,232,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(123,232,255,.04) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(to bottom,transparent,#000 42%,#000)}#avatar3d{position:absolute;inset:0;width:100%;height:100%;display:block}.badge{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 12px;border-radius:999px;background:rgba(3,8,13,.74);border:1px solid var(--line);font-size:12px;color:#bfefff;max-width:90%;white-space:normal}.badge.error{color:#ffb8bd}.status{margin:18px 0 10px;font-weight:800}.transcript{min-height:94px;padding:18px 20px;border:1px solid var(--line);border-radius:20px;background:var(--panel);font-size:1.08rem;line-height:1.6;text-align:left}.start{margin-top:18px;border:1px solid rgba(123,232,255,.25);border-radius:999px;padding:15px 28px;background:linear-gradient(180deg,#17849b,#0b6579);color:white;font-weight:800;cursor:pointer;min-width:220px}.start.active{background:linear-gradient(180deg,#a83f4a,#742832)}.voice-badge{display:inline-flex;gap:8px;align-items:center;margin-top:12px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:#a9c5d0}.dot{width:8px;height:8px;border-radius:50%;background:#3fb950}.dot.offline{background:#da3633}.approval{text-align:left;margin-top:18px}.approval-card{background:rgba(15,25,35,.94);border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:10px}.approval-card button{border:0;border-radius:9px;padding:9px 12px;margin-right:8px;font-weight:700}.approve{background:#238636;color:#fff}.reject{background:#da3633;color:#fff}@media(max-width:720px){.stage{height:520px}}
 </style>
 </head>
-<body><div class="shell"><h1 class="brand">KUPPA AI</h1><p class="muted">Your personal digital human. Think with you, act only with approval.</p><div class="stage"><div class="grid"></div><canvas id="avatar3d"></canvas><div class="badge" id="avatarStatus">Loading local humanoid…</div></div><div class="status" id="status">Ready</div><div class="transcript" id="transcript">Press Start conversation, allow microphone access, and speak naturally.</div><div class="voice-badge"><span class="dot" id="voiceDot"></span><span id="voiceStatus">KUPPA neural voice required</span></div><br/><button class="start" id="startButton" onclick="toggleConversation()">Start conversation</button><div class="approval" id="approvals"></div></div>
+<body><div class="shell"><h1 class="brand">KUPPA AI</h1><p class="muted">Your personal digital human. Think with you, act only with approval.</p><div class="stage"><div class="grid"></div><canvas id="avatar3d"></canvas><div class="badge" id="avatarStatus">Preparing local humanoid…</div></div><div class="status" id="status">Ready</div><div class="transcript" id="transcript">Press Start conversation, allow microphone access, and speak naturally.</div><div class="voice-badge"><span class="dot" id="voiceDot"></span><span id="voiceStatus">KUPPA neural voice required</span></div><br/><button class="start" id="startButton" onclick="toggleConversation()">Start conversation</button><div class="approval" id="approvals"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
@@ -23,28 +23,50 @@ async function initAvatar(){
     scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(28,1,.1,100);camera.position.set(0,1.5,3.25);camera.lookAt(0,1.42,0);
     scene.add(new THREE.HemisphereLight(0xe9f7ff,0x101c28,1.35));const key=new THREE.DirectionalLight(0xfff1e8,1.65);key.position.set(2.5,4,3);scene.add(key);const rim=new THREE.DirectionalLight(0x6be0ff,.9);rim.position.set(-3,2,-2);scene.add(rim);
     resizeAvatar();window.addEventListener('resize',resizeAvatar);clock=new THREE.Clock();
+    await waitForAvatarCache();
+    await loadCachedAvatar();
+  }catch(e){throwAvatar(e)}
+}
 
-    avatarStatus.textContent='Downloading local KUPPA humanoid…';
-    const response=await fetch('/api/avatar/model',{cache:'no-store'});
-    if(!response.ok){
-      let detail='';
-      try{detail=(await response.json()).error||''}catch(e){try{detail=await response.text()}catch(ignore){}}
-      throw new Error(`Avatar backend HTTP ${response.status}${detail?': '+detail:''}`);
-    }
-    const bytes=await response.arrayBuffer();
-    if(bytes.byteLength<100000)throw new Error('Avatar backend returned an unexpectedly small GLB ('+bytes.byteLength+' bytes)');
-    const loader=new THREE.GLTFLoader();
-    loader.parse(bytes,'',gltf=>{
+async function waitForAvatarCache(){
+  const started=Date.now();
+  let lastStatus=null;
+  while(Date.now()-started<45000){
+    const r=await fetch('/api/avatar/status',{cache:'no-store'});
+    if(!r.ok)throw new Error('Avatar status HTTP '+r.status);
+    lastStatus=await r.json();
+    if(lastStatus.cached){avatarStatus.textContent='Local KUPPA humanoid ready';return;}
+    if(lastStatus.error){throw new Error(lastStatus.error);}
+    const elapsed=Math.floor((Date.now()-started)/1000);
+    avatarStatus.textContent='Downloading local KUPPA humanoid… '+elapsed+'s';
+    await new Promise(res=>setTimeout(res,1000));
+  }
+  throw new Error('Avatar download did not complete. Check /api/avatar/status for the backend error.');
+}
+
+async function loadCachedAvatar(){
+  avatarStatus.textContent='Loading cached KUPPA humanoid…';
+  const response=await fetch('/api/avatar/model',{cache:'no-store'});
+  if(!response.ok){
+    let detail='';
+    try{const data=await response.json();detail=data.error||data.message||JSON.stringify(data)}catch(e){try{detail=await response.text()}catch(ignore){}}
+    throw new Error(`Avatar backend HTTP ${response.status}${detail?': '+detail:''}`);
+  }
+  const bytes=await response.arrayBuffer();
+  if(bytes.byteLength<100000)throw new Error('Avatar backend returned an unexpectedly small GLB ('+bytes.byteLength+' bytes)');
+  await new Promise((resolve,reject)=>{
+    new THREE.GLTFLoader().parse(bytes,'',gltf=>{
       try{
         avatarModel=gltf.scene;
         const box=new THREE.Box3().setFromObject(avatarModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
         const scale=2.35/Math.max(size.y,.001);avatarModel.scale.setScalar(scale);avatarModel.position.x=-center.x*scale;avatarModel.position.z=-center.z*scale;avatarModel.position.y=-box.min.y*scale-.12;
         scene.add(avatarModel);faceMeshes=[];avatarModel.traverse(o=>{if(o.isMesh&&o.morphTargetDictionary)faceMeshes.push(o)});
-        avatarStatus.textContent='KUPPA Ready Player Me humanoid online';avatarStatus.classList.remove('error');animateAvatar();
-      }catch(e){throwAvatar(e)}
-    },e=>throwAvatar(new Error('GLB parse failed: '+(e?.message||String(e)))));
-  }catch(e){throwAvatar(e)}
+        avatarStatus.textContent='KUPPA Ready Player Me humanoid online';avatarStatus.classList.remove('error');animateAvatar();resolve();
+      }catch(e){reject(e)}
+    },e=>reject(new Error('GLB parse failed: '+(e?.message||String(e)))));
+  });
 }
+
 function throwAvatar(e){console.error(e);avatarStatus.textContent='Avatar error: '+(e?.message||String(e));avatarStatus.classList.add('error')}
 function resizeAvatar(){if(!renderer||!camera)return;const c=renderer.domElement,w=c.clientWidth||c.parentElement.clientWidth,h=c.clientHeight||c.parentElement.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
 function morph(names,value){for(const m of faceMeshes){const d=m.morphTargetDictionary||{},i=m.morphTargetInfluences||[];for(const n of names)if(d[n]!==undefined)i[d[n]]=value}}
