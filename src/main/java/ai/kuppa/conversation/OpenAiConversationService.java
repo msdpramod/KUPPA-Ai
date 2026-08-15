@@ -2,6 +2,7 @@ package ai.kuppa.conversation;
 
 import ai.kuppa.chat.ChatMessage;
 import ai.kuppa.chat.ChatMessageRepository;
+import ai.kuppa.memory.MemoryPromptFormatter;
 import ai.kuppa.memory.PersonaMemory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,14 +29,17 @@ public class OpenAiConversationService {
     private final HttpClient httpClient;
     private final String apiKey;
     private final String model;
+    private final MemoryPromptFormatter memoryFormatter;
 
     public OpenAiConversationService(
             ChatMessageRepository chatRepository,
             ObjectMapper objectMapper,
+            MemoryPromptFormatter memoryFormatter,
             @Value("${kuppa.openai.api-key:}") String configuredApiKey,
             @Value("${kuppa.openai.model:gpt-5-mini}") String model) {
         this.chatRepository = chatRepository;
         this.objectMapper = objectMapper;
+        this.memoryFormatter = memoryFormatter;
         this.apiKey = resolveApiKey(configuredApiKey);
         this.model = model;
         this.httpClient = HttpClient.newBuilder()
@@ -44,23 +48,17 @@ public class OpenAiConversationService {
     }
 
     private String resolveApiKey(String configuredApiKey) {
-        if (configuredApiKey != null && !configuredApiKey.isBlank()) {
-            return configuredApiKey.trim();
-        }
+        if (configuredApiKey != null && !configuredApiKey.isBlank()) return configuredApiKey.trim();
         String environmentApiKey = System.getenv("OPENAI_API_KEY");
         return environmentApiKey == null ? "" : environmentApiKey.trim();
     }
 
-    public boolean isConfigured() {
-        return !apiKey.isBlank();
-    }
+    public boolean isConfigured() { return !apiKey.isBlank(); }
 
     public String answer(String currentMessage, List<PersonaMemory> memory) {
         if (!isConfigured()) {
-            return "My voice loop is connected, but my conversational brain is not configured yet. " +
-                    "Set OPENAI_API_KEY in the terminal that starts KUPPA AI, restart me, and then ask again.";
+            return "My voice loop is connected, but my conversational brain is not configured yet. Set OPENAI_API_KEY in the terminal that starts KUPPA AI, restart me, and then ask again.";
         }
-
         try {
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("model", model);
@@ -68,19 +66,14 @@ public class OpenAiConversationService {
             body.put("instructions", buildInstructions(memory));
             body.put("input", buildConversationText(currentMessage));
 
-            String json = objectMapper.writeValueAsString(body);
             HttpRequest request = HttpRequest.newBuilder(RESPONSES_URI)
                     .timeout(Duration.ofSeconds(60))
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
                     .build();
-
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                return formatApiError(response.statusCode(), response.body());
-            }
-
+            if (response.statusCode() < 200 || response.statusCode() >= 300) return formatApiError(response.statusCode(), response.body());
             String text = extractOutputText(response.body());
             return text.isBlank() ? "I received your question, but the model returned no spoken answer." : text;
         } catch (InterruptedException e) {
@@ -92,32 +85,21 @@ public class OpenAiConversationService {
     }
 
     private String buildInstructions(List<PersonaMemory> memory) {
-        String persona = memory.stream()
-                .limit(20)
-                .map(m -> m.getCategory() + ": " + m.getContent())
-                .reduce((a, b) -> a + "\n" + b)
-                .orElse("No confirmed persona memory yet.");
-
-        return "You are KUPPA AI, a private one-on-one personal assistant. " +
-                "Speak naturally and concisely, like a real conversation. Answer the user's actual question directly. " +
-                "Do not claim an external action happened. External actions must always go through KUPPA AI's approval system. " +
-                "Use these persona memories only when relevant:\n" + persona;
+        return "You are KUPPA AI, a private one-on-one personal assistant. Speak naturally and concisely, like a real conversation. " +
+                "Answer the user's actual question directly. Do not claim an external action happened. External actions must always go through KUPPA AI's approval system. " +
+                "Use persona memory only when relevant. Treat tentative memory as a hypothesis rather than a fact and ask or hedge when it materially affects an answer.\n" +
+                memoryFormatter.format(memory);
     }
 
     private String buildConversationText(String currentMessage) {
         List<ChatMessage> recent = new ArrayList<>(chatRepository.findTop50ByOrderByCreatedAtDesc());
         if (recent.size() > 12) recent = new ArrayList<>(recent.subList(0, 12));
         Collections.reverse(recent);
-
         StringBuilder transcript = new StringBuilder();
         for (ChatMessage item : recent) {
-            transcript.append("USER".equals(item.getRole()) ? "User: " : "KUPPA AI: ")
-                    .append(item.getContent())
-                    .append('\n');
+            transcript.append("USER".equals(item.getRole()) ? "User: " : "KUPPA AI: ").append(item.getContent()).append('\n');
         }
-        if (transcript.isEmpty() || !transcript.toString().contains(currentMessage)) {
-            transcript.append("User: ").append(currentMessage).append('\n');
-        }
+        if (transcript.isEmpty() || !transcript.toString().contains(currentMessage)) transcript.append("User: ").append(currentMessage).append('\n');
         transcript.append("KUPPA AI:");
         return transcript.toString();
     }
@@ -126,11 +108,8 @@ public class OpenAiConversationService {
         try {
             JsonNode root = objectMapper.readTree(responseBody);
             String message = root.path("error").path("message").asText("");
-            if (!message.isBlank()) {
-                return "OpenAI returned HTTP " + statusCode + ": " + message;
-            }
-        } catch (Exception ignored) {
-        }
+            if (!message.isBlank()) return "OpenAI returned HTTP " + statusCode + ": " + message;
+        } catch (Exception ignored) {}
         return "OpenAI returned HTTP " + statusCode + ". The request was rejected by the model API.";
     }
 
