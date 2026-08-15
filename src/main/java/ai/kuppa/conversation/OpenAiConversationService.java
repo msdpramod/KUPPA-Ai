@@ -32,15 +32,23 @@ public class OpenAiConversationService {
     public OpenAiConversationService(
             ChatMessageRepository chatRepository,
             ObjectMapper objectMapper,
-            @Value("${kuppa.openai.api-key:}") String apiKey,
+            @Value("${kuppa.openai.api-key:}") String configuredApiKey,
             @Value("${kuppa.openai.model:gpt-5-mini}") String model) {
         this.chatRepository = chatRepository;
         this.objectMapper = objectMapper;
-        this.apiKey = apiKey == null ? "" : apiKey.trim();
+        this.apiKey = resolveApiKey(configuredApiKey);
         this.model = model;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
+    }
+
+    private String resolveApiKey(String configuredApiKey) {
+        if (configuredApiKey != null && !configuredApiKey.isBlank()) {
+            return configuredApiKey.trim();
+        }
+        String environmentApiKey = System.getenv("OPENAI_API_KEY");
+        return environmentApiKey == null ? "" : environmentApiKey.trim();
     }
 
     public boolean isConfigured() {
