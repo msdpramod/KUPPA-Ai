@@ -26,6 +26,10 @@ kuppa:
   openai:
     api-key: ${OPENAI_API_KEY:}
     model: ${OPENAI_MODEL:gpt-5-mini}
+    fallback-enabled: ${OPENAI_FALLBACK_ENABLED:false}
+  avatar:
+    source-url: ${KUPPA_AVATAR_SOURCE_URL:https://models.readyplayer.me/KJIXZB.glb?quality=high&morphTargets=ARKit,Oculus%20Visemes&textureSizeLimit=1024}
+    data-dir: ${KUPPA_AVATAR_DATA_DIR:${user.home}/.kuppa-ai/avatar}
   voice:
     enabled: ${KUPPA_VOICE_ENABLED:true}
     auto-start: ${KUPPA_VOICE_AUTO_START:true}
