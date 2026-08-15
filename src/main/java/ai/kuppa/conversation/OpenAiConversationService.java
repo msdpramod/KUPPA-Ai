@@ -64,8 +64,9 @@ public class OpenAiConversationService {
         try {
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("model", model);
-            body.put("max_output_tokens", 700);
-            body.put("input", buildConversationInput(memory));
+            body.put("max_output_tokens", 900);
+            body.put("instructions", buildInstructions(memory));
+            body.put("input", buildConversationText(currentMessage));
 
             String json = objectMapper.writeValueAsString(body);
             HttpRequest request = HttpRequest.newBuilder(RESPONSES_URI)
@@ -77,8 +78,7 @@ public class OpenAiConversationService {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                return "I could not reach my conversational model right now (HTTP " + response.statusCode() + "). " +
-                        "Check OPENAI_API_KEY and try again.";
+                return formatApiError(response.statusCode(), response.body());
             }
 
             String text = extractOutputText(response.body());
@@ -91,34 +91,47 @@ public class OpenAiConversationService {
         }
     }
 
-    private List<Map<String, Object>> buildConversationInput(List<PersonaMemory> memory) {
-        List<Map<String, Object>> input = new ArrayList<>();
+    private String buildInstructions(List<PersonaMemory> memory) {
         String persona = memory.stream()
                 .limit(20)
                 .map(m -> m.getCategory() + ": " + m.getContent())
                 .reduce((a, b) -> a + "\n" + b)
                 .orElse("No confirmed persona memory yet.");
 
-        input.add(message("developer", "You are KUPPA AI, a private one-on-one personal assistant. " +
+        return "You are KUPPA AI, a private one-on-one personal assistant. " +
                 "Speak naturally and concisely, like a real conversation. Answer the user's actual question directly. " +
                 "Do not claim an external action happened. External actions must always go through KUPPA AI's approval system. " +
-                "Use these persona memories only when relevant:\n" + persona));
-
-        List<ChatMessage> recent = new ArrayList<>(chatRepository.findTop50ByOrderByCreatedAtDesc());
-        if (recent.size() > 14) recent = new ArrayList<>(recent.subList(0, 14));
-        Collections.reverse(recent);
-        for (ChatMessage item : recent) {
-            String role = "USER".equals(item.getRole()) ? "user" : "assistant";
-            input.add(message(role, item.getContent()));
-        }
-        return input;
+                "Use these persona memories only when relevant:\n" + persona;
     }
 
-    private Map<String, Object> message(String role, String text) {
-        return Map.of(
-                "role", role,
-                "content", List.of(Map.of("type", "input_text", "text", text))
-        );
+    private String buildConversationText(String currentMessage) {
+        List<ChatMessage> recent = new ArrayList<>(chatRepository.findTop50ByOrderByCreatedAtDesc());
+        if (recent.size() > 12) recent = new ArrayList<>(recent.subList(0, 12));
+        Collections.reverse(recent);
+
+        StringBuilder transcript = new StringBuilder();
+        for (ChatMessage item : recent) {
+            transcript.append("USER".equals(item.getRole()) ? "User: " : "KUPPA AI: ")
+                    .append(item.getContent())
+                    .append('\n');
+        }
+        if (transcript.isEmpty() || !transcript.toString().contains(currentMessage)) {
+            transcript.append("User: ").append(currentMessage).append('\n');
+        }
+        transcript.append("KUPPA AI:");
+        return transcript.toString();
+    }
+
+    private String formatApiError(int statusCode, String responseBody) {
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            String message = root.path("error").path("message").asText("");
+            if (!message.isBlank()) {
+                return "OpenAI returned HTTP " + statusCode + ": " + message;
+            }
+        } catch (Exception ignored) {
+        }
+        return "OpenAI returned HTTP " + statusCode + ". The request was rejected by the model API.";
     }
 
     private String extractOutputText(String responseBody) throws Exception {
