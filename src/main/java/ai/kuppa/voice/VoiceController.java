@@ -27,6 +27,11 @@ public class VoiceController {
         return voiceService.status();
     }
 
+    @PostMapping("/repair")
+    public Map<String, Object> repair() {
+        return voiceService.repairVoice();
+    }
+
     @PostMapping(value = "/synthesize", produces = "audio/wav")
     public ResponseEntity<byte[]> synthesize(@RequestBody VoiceRequest request) {
         byte[] audio = voiceService.synthesize(request.text());
