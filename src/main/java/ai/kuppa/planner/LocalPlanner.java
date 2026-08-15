@@ -1,7 +1,7 @@
 package ai.kuppa.planner;
 
 import ai.kuppa.action.RiskLevel;
-import ai.kuppa.conversation.OpenAiConversationService;
+import ai.kuppa.conversation.BrainRouterService;
 import ai.kuppa.memory.PersonaMemory;
 import org.springframework.stereotype.Component;
 
@@ -10,10 +10,10 @@ import java.util.Locale;
 
 @Component
 public class LocalPlanner implements Planner {
-    private final OpenAiConversationService conversationService;
+    private final BrainRouterService brainRouter;
 
-    public LocalPlanner(OpenAiConversationService conversationService) {
-        this.conversationService = conversationService;
+    public LocalPlanner(BrainRouterService brainRouter) {
+        this.brainRouter = brainRouter;
     }
 
     @Override
@@ -41,7 +41,7 @@ public class LocalPlanner implements Planner {
         }
 
         return new Plan(
-            conversationService.answer(message, memory),
+            brainRouter.answer(message, memory),
             null, null, null, null, RiskLevel.LOW
         );
     }
