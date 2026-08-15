@@ -1,13 +1,21 @@
 package ai.kuppa.planner;
 
 import ai.kuppa.action.RiskLevel;
+import ai.kuppa.conversation.OpenAiConversationService;
 import ai.kuppa.memory.PersonaMemory;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Locale;
 
 @Component
 public class LocalPlanner implements Planner {
+    private final OpenAiConversationService conversationService;
+
+    public LocalPlanner(OpenAiConversationService conversationService) {
+        this.conversationService = conversationService;
+    }
+
     @Override
     public Plan plan(String message, List<PersonaMemory> memory) {
         String lower = message.toLowerCase(Locale.ROOT);
@@ -31,8 +39,9 @@ public class LocalPlanner implements Planner {
                 RiskLevel.HIGH
             );
         }
+
         return new Plan(
-            "I understood your request. For now I can reason and recommend; external tool execution remains approval-gated.",
+            conversationService.answer(message, memory),
             null, null, null, null, RiskLevel.LOW
         );
     }
