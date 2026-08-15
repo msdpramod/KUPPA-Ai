@@ -28,53 +28,43 @@ function mesh(geo,material,parent,pos,scale,rot){const m=new THREE.Mesh(geo,mate
 function sphere(parent,pos,scale,material,segments=48){return mesh(new THREE.SphereGeometry(1,segments,segments),material,parent,pos,scale)}
 
 function initAvatar(){
-  const canvas=document.getElementById('avatar3d');
-  if(!window.THREE){avatarStatus.textContent='Three.js failed to load';avatarStatus.classList.add('error');return}
-  renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
-  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(30,1,.1,100);camera.position.set(0,1.62,3.35);camera.lookAt(0,1.42,0);
-  scene.add(new THREE.HemisphereLight(0xe8f7ff,0x132331,1.25));const key=new THREE.DirectionalLight(0xfff3e9,1.55);key.position.set(2.7,4.2,3.5);scene.add(key);const rim=new THREE.DirectionalLight(0x66ddff,.9);rim.position.set(-3,2.3,-2.4);scene.add(rim);const fill=new THREE.PointLight(0xffc8b0,.45,8);fill.position.set(-1.5,1.8,2.2);scene.add(fill);
-  buildHumanoid();resizeAvatar();window.addEventListener('resize',resizeAvatar);clock=new THREE.Clock();avatarStatus.textContent='KUPPA local 3D avatar online';animateAvatar();
+  try{
+    const canvas=document.getElementById('avatar3d');
+    if(!window.THREE)throw new Error('Three.js failed to load');
+    renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
+    scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(30,1,.1,100);camera.position.set(0,1.62,3.35);camera.lookAt(0,1.42,0);
+    scene.add(new THREE.HemisphereLight(0xe8f7ff,0x132331,1.25));const key=new THREE.DirectionalLight(0xfff3e9,1.55);key.position.set(2.7,4.2,3.5);scene.add(key);const rim=new THREE.DirectionalLight(0x66ddff,.9);rim.position.set(-3,2.3,-2.4);scene.add(rim);const fill=new THREE.PointLight(0xffc8b0,.45,8);fill.position.set(-1.5,1.8,2.2);scene.add(fill);
+    buildHumanoid();resizeAvatar();window.addEventListener('resize',resizeAvatar);clock=new THREE.Clock();avatarStatus.textContent='KUPPA local 3D avatar online';avatarStatus.classList.remove('error');animateAvatar();
+  }catch(e){console.error('KUPPA avatar startup failed',e);avatarStatus.textContent='Avatar error: '+(e?.message||e);avatarStatus.classList.add('error')}
 }
 
 function buildHumanoid(){
   avatarRoot=new THREE.Group();avatarRoot.position.y=-.06;scene.add(avatarRoot);
   const skin=mat(0xd49a79,.72),skinLight=mat(0xe3ad8c,.7),hair=mat(0x111820,.56),shirt=mat(0x142c3a,.5,.08),shirt2=mat(0x0b1720,.48,.13),white=mat(0xf3f5f2,.42),iris=mat(0x49727a,.35),pupil=mat(0x080b0e,.25),lip=mat(0x7f3e43,.55),mouthDark=mat(0x32171a,.7),brow=mat(0x2a1c18,.7);
-  // torso and shoulders
   sphere(avatarRoot,[0,.69,0],[.72,.72,.42],shirt,56);
   sphere(avatarRoot,[-.63,.71,0],[.34,.45,.34],shirt2,42);sphere(avatarRoot,[.63,.71,0],[.34,.45,.34],shirt2,42);
   mesh(new THREE.CylinderGeometry(.19,.24,.34,32),skin,avatarRoot,[0,1.16,0],[1,1,1]);
-  // subtle chest core
-  const core=mesh(new THREE.TorusGeometry(.13,.018,16,64),mat(0x75e9ff,.3,.35),avatarRoot,[0,.78,.42],[1,1,1],[Math.PI/2,0,0]);
-  const coreDot=sphere(avatarRoot,[0,.78,.405],[.055,.055,.02],mat(0x88f1ff,.2,.2),32);
-  // head hierarchy
+  mesh(new THREE.TorusGeometry(.13,.018,16,64),mat(0x75e9ff,.3,.35),avatarRoot,[0,.78,.42],[1,1,1],[Math.PI/2,0,0]);
+  sphere(avatarRoot,[0,.78,.405],[.055,.055,.02],mat(0x88f1ff,.2,.2),32);
   headRoot=new THREE.Group();headRoot.position.set(0,1.62,0);avatarRoot.add(headRoot);
-  const face=sphere(headRoot,[0,0,0],[.43,.53,.39],skinLight,64);
-  // ears
+  sphere(headRoot,[0,0,0],[.43,.53,.39],skinLight,64);
   sphere(headRoot,[-.415,-.01,0],[.075,.125,.06],skin,36);sphere(headRoot,[.415,-.01,0],[.075,.125,.06],skin,36);
-  // hair mass + fringe
   sphere(headRoot,[0,.33,-.015],[.445,.31,.395],hair,56);sphere(headRoot,[-.17,.36,.12],[.28,.20,.20],hair,48);sphere(headRoot,[.16,.39,.10],[.31,.18,.19],hair,48);
-  // jawline / chin shaping
   sphere(headRoot,[0,-.33,.015],[.30,.20,.31],skinLight,48);
-  // nose
   const nose=sphere(headRoot,[0,-.02,.375],[.065,.13,.07],skin,40);nose.rotation.x=-.1;
-  // eyes
   leftEye=sphere(headRoot,[-.16,.09,.345],[.115,.062,.045],white,40);rightEye=sphere(headRoot,[.16,.09,.345],[.115,.062,.045],white,40);
-  const leftIris=sphere(headRoot,[-.16,.09,.386],[.047,.047,.018],iris,36);const rightIris=sphere(headRoot,[.16,.09,.386],[.047,.047,.018],iris,36);
+  sphere(headRoot,[-.16,.09,.386],[.047,.047,.018],iris,36);sphere(headRoot,[.16,.09,.386],[.047,.047,.018],iris,36);
   leftPupil=sphere(headRoot,[-.16,.09,.402],[.022,.022,.009],pupil,32);rightPupil=sphere(headRoot,[.16,.09,.402],[.022,.022,.009],pupil,32);
   sphere(headRoot,[-.177,.112,.412],[.008,.008,.004],white,20);sphere(headRoot,[.143,.112,.412],[.008,.008,.004],white,20);
-  // brows
-  mesh(new THREE.CapsuleGeometry(.025,.15,6,12),brow,headRoot,[-.16,.205,.365],[1,1,1],[0,0,Math.PI/2+.12]);
-  mesh(new THREE.CapsuleGeometry(.025,.15,6,12),brow,headRoot,[.16,.205,.365],[1,1,1],[0,0,Math.PI/2-.12]);
-  // lips and jaw opening
+  const browGeo=new THREE.BoxGeometry(.18,.035,.025);
+  mesh(browGeo,brow,headRoot,[-.16,.205,.365],[1,1,1],[0,0,-.12]);
+  mesh(browGeo,brow,headRoot,[.16,.205,.365],[1,1,1],[0,0,.12]);
   sphere(headRoot,[0,-.205,.371],[.14,.032,.026],lip,36);
   jaw=new THREE.Group();jaw.position.set(0,-.225,.377);headRoot.add(jaw);
   sphere(jaw,[0,-.012,0],[.105,.02,.014],mouthDark,30);
   sphere(jaw,[0,-.035,.004],[.11,.026,.017],lip,30);
-  // cheek warmth
   const cheekMat=new THREE.MeshBasicMaterial({color:0xc7776d,transparent:true,opacity:.12});sphere(headRoot,[-.25,-.07,.34],[.12,.07,.018],cheekMat,32);sphere(headRoot,[.25,-.07,.34],[.12,.07,.018],cheekMat,32);
-  // floor glow
   const glow=new THREE.Mesh(new THREE.RingGeometry(.65,1.12,64),new THREE.MeshBasicMaterial({color:0x62dfff,transparent:true,opacity:.08,side:THREE.DoubleSide}));glow.rotation.x=-Math.PI/2;glow.position.y=.04;avatarRoot.add(glow);
-  avatarRoot.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false}});
 }
 
 function resizeAvatar(){if(!renderer||!camera)return;const canvas=renderer.domElement,w=canvas.clientWidth||canvas.parentElement.clientWidth,h=canvas.clientHeight||canvas.parentElement.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
