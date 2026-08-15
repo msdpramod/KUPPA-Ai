@@ -1,6 +1,5 @@
 package ai.kuppa.voice;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -14,6 +13,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -34,6 +35,7 @@ public class KuppaVoiceService {
     private final boolean autoStart;
     private final String pythonCommand;
     private final int serverPort;
+    private final Path dataDir;
     private volatile Process piperProcess;
     private volatile String lastStartupError;
 
@@ -47,7 +49,8 @@ public class KuppaVoiceService {
             @Value("${kuppa.voice.enabled:true}") boolean enabled,
             @Value("${kuppa.voice.auto-start:true}") boolean autoStart,
             @Value("${kuppa.voice.python-command:python3}") String pythonCommand,
-            @Value("${kuppa.voice.port:5500}") int serverPort) {
+            @Value("${kuppa.voice.port:5500}") int serverPort,
+            @Value("${kuppa.voice.data-dir:${user.home}/.kuppa-ai/voices}") String dataDir) {
         this.objectMapper = objectMapper;
         this.voice = voice;
         this.lengthScale = lengthScale;
@@ -57,6 +60,7 @@ public class KuppaVoiceService {
         this.autoStart = autoStart;
         this.pythonCommand = pythonCommand;
         this.serverPort = serverPort;
+        this.dataDir = Path.of(dataDir).toAbsolutePath().normalize();
         String root = baseUrl.replaceAll("/$", "");
         this.synthesizeUri = URI.create(root + "/synthesize");
         this.infoUri = URI.create(root + "/info");
@@ -67,10 +71,8 @@ public class KuppaVoiceService {
     public void warmUp() {
         if (!enabled || !autoStart) return;
         Thread starter = new Thread(() -> {
-            try {
-                ensureVoiceEngine();
-            } catch (Exception ignored) {
-            }
+            try { ensureVoiceEngine(); }
+            catch (Exception ignored) { }
         }, "kuppa-voice-warmup");
         starter.setDaemon(true);
         starter.start();
@@ -94,21 +96,13 @@ public class KuppaVoiceService {
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
                     .build();
-
             HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 String details = new String(response.body(), StandardCharsets.UTF_8).trim();
-                if (details.length() > 300) details = details.substring(0, 300);
                 throw new VoiceUnavailableException("Piper returned HTTP " + response.statusCode() +
-                        (details.isBlank() ? "" : ": " + details));
+                        (details.isBlank() ? "" : ": " + details.substring(0, Math.min(details.length(), 300))));
             }
-            String contentType = response.headers().firstValue("Content-Type").orElse("").toLowerCase(Locale.ROOT);
-            if (!contentType.contains("audio") && !looksLikeWav(response.body())) {
-                throw new VoiceUnavailableException("Voice endpoint on port " + serverPort + " is not Piper/audio. Content-Type=" + contentType);
-            }
-            if (!looksLikeWav(response.body())) {
-                throw new VoiceUnavailableException("Piper returned an invalid WAV response");
-            }
+            if (!looksLikeWav(response.body())) throw new VoiceUnavailableException("Piper returned an invalid WAV response");
             return response.body();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -120,39 +114,51 @@ public class KuppaVoiceService {
         }
     }
 
-    private boolean looksLikeWav(byte[] bytes) {
-        return bytes != null && bytes.length >= 44 &&
-                bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F' &&
-                bytes[8] == 'W' && bytes[9] == 'A' && bytes[10] == 'V' && bytes[11] == 'E';
-    }
-
     private void ensureVoiceEngine() {
         if (isPiperReachable()) return;
-        if (!autoStart) throw new VoiceUnavailableException("Piper is offline at " + infoUri + " and auto-start is disabled");
-        startPiperIfNeeded();
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20);
-        while (System.nanoTime() < deadline) {
-            if (isPiperReachable()) return;
-            if (piperProcess != null && !piperProcess.isAlive()) break;
-            try { Thread.sleep(350); }
-            catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new VoiceUnavailableException("Interrupted while waiting for Piper to start", e);
-            }
+        if (!autoStart) throw new VoiceUnavailableException("Piper is offline and auto-start is disabled");
+
+        ensureVoiceFiles(false);
+        startPiper();
+        if (waitForPiper(20)) return;
+
+        if (isCorruptModelError(lastStartupError)) {
+            stopManagedPiper();
+            ensureVoiceFiles(true);
+            lastStartupError = null;
+            startPiper();
+            if (waitForPiper(25)) return;
         }
+
         String reason = lastStartupError == null || lastStartupError.isBlank()
                 ? "Piper did not become healthy on port " + serverPort
                 : lastStartupError;
         throw new VoiceUnavailableException("KUPPA could not start the local neural voice engine: " + reason);
     }
 
-    private synchronized void startPiperIfNeeded() {
+    private boolean waitForPiper(int seconds) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(seconds);
+        while (System.nanoTime() < deadline) {
+            if (isPiperReachable()) return true;
+            if (piperProcess != null && !piperProcess.isAlive()) return false;
+            try { Thread.sleep(350); }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private synchronized void startPiper() {
         if (isPiperReachable()) return;
         if (piperProcess != null && piperProcess.isAlive()) return;
         try {
+            Files.createDirectories(dataDir);
             ProcessBuilder pb = new ProcessBuilder(
                     pythonCommand, "-m", "piper.http_server",
                     "-m", voice,
+                    "--data-dir", dataDir.toString(),
                     "--port", String.valueOf(serverPort)
             );
             pb.redirectErrorStream(true);
@@ -163,9 +169,61 @@ public class KuppaVoiceService {
             logReader.start();
         } catch (Exception e) {
             lastStartupError = rootMessage(e);
-            throw new VoiceUnavailableException(
-                    "Unable to launch Piper with '" + pythonCommand + " -m piper.http_server'. " +
-                    "Make sure piper-tts[http] and voice '" + voice + "' are installed. Cause: " + lastStartupError, e);
+            throw new VoiceUnavailableException("Unable to launch Piper: " + lastStartupError, e);
+        }
+    }
+
+    private void ensureVoiceFiles(boolean forceRepair) {
+        try {
+            Files.createDirectories(dataDir);
+            Path model = dataDir.resolve(voice + ".onnx");
+            Path config = dataDir.resolve(voice + ".onnx.json");
+            boolean missingOrTiny = !Files.exists(model) || Files.size(model) < 1_000_000 ||
+                    !Files.exists(config) || Files.size(config) < 100;
+            if (!forceRepair && !missingOrTiny) return;
+
+            Files.deleteIfExists(model);
+            Files.deleteIfExists(config);
+            ProcessBuilder pb = new ProcessBuilder(
+                    pythonCommand, "-m", "piper.download_voices",
+                    voice, "--data-dir", dataDir.toString()
+            );
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            String output = readAll(process);
+            if (!process.waitFor(120, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                throw new VoiceUnavailableException("Timed out downloading Piper voice " + voice);
+            }
+            if (process.exitValue() != 0 || !Files.exists(model) || Files.size(model) < 1_000_000) {
+                throw new VoiceUnavailableException("Failed to download Piper voice " + voice + ": " + output);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new VoiceUnavailableException("Interrupted while downloading Piper voice", e);
+        } catch (VoiceUnavailableException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new VoiceUnavailableException("Unable to prepare Piper voice files in " + dataDir + ": " + rootMessage(e), e);
+        }
+    }
+
+    private boolean isCorruptModelError(String error) {
+        if (error == null) return false;
+        String e = error.toLowerCase(Locale.ROOT);
+        return e.contains("invalidprotobuf") || e.contains("protobuf parsing failed") || e.contains("invalid protobuf");
+    }
+
+    private String readAll(Process process) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            StringBuilder out = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (out.length() < 3000) out.append(line).append('\n');
+            }
+            return out.toString().trim();
+        } catch (Exception e) {
+            return rootMessage(e);
         }
     }
 
@@ -174,11 +232,11 @@ public class KuppaVoiceService {
             String line;
             StringBuilder recent = new StringBuilder();
             while ((line = reader.readLine()) != null) {
-                if (recent.length() > 1200) recent.delete(0, Math.min(600, recent.length()));
+                if (recent.length() > 1600) recent.delete(0, Math.min(800, recent.length()));
                 recent.append(line).append('\n');
                 lastStartupError = recent.toString().trim();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) { }
     }
 
     private boolean isPiperReachable() {
@@ -186,13 +244,18 @@ public class KuppaVoiceService {
             HttpRequest request = HttpRequest.newBuilder(infoUri).timeout(Duration.ofSeconds(2)).GET().build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) return false;
-            String contentType = response.headers().firstValue("Content-Type").orElse("").toLowerCase(Locale.ROOT);
             String body = response.body() == null ? "" : response.body().trim();
-            if (body.startsWith("bplist00")) return false;
-            return contentType.contains("json") || body.startsWith("{") || body.startsWith("[");
+            String contentType = response.headers().firstValue("Content-Type").orElse("").toLowerCase(Locale.ROOT);
+            return !body.startsWith("bplist00") && (contentType.contains("json") || body.startsWith("{") || body.startsWith("["));
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private boolean looksLikeWav(byte[] bytes) {
+        return bytes != null && bytes.length >= 44 &&
+                bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F' &&
+                bytes[8] == 'W' && bytes[9] == 'A' && bytes[10] == 'V' && bytes[11] == 'E';
     }
 
     public Map<String, Object> status() {
@@ -202,6 +265,7 @@ public class KuppaVoiceService {
         result.put("endpoint", synthesizeUri.toString());
         result.put("autoStart", autoStart);
         result.put("pythonCommand", pythonCommand);
+        result.put("dataDir", dataDir.toString());
         result.put("managedProcessAlive", piperProcess != null && piperProcess.isAlive());
         result.put("reachable", isPiperReachable());
         result.put("port", serverPort);
@@ -211,7 +275,12 @@ public class KuppaVoiceService {
 
     @PreDestroy
     public void stopManagedPiper() {
-        if (piperProcess != null && piperProcess.isAlive()) piperProcess.destroy();
+        if (piperProcess != null && piperProcess.isAlive()) {
+            piperProcess.destroy();
+            try { piperProcess.waitFor(2, TimeUnit.SECONDS); }
+            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            if (piperProcess.isAlive()) piperProcess.destroyForcibly();
+        }
     }
 
     private String rootMessage(Throwable e) {
