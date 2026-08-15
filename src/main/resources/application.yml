@@ -27,11 +27,12 @@ kuppa:
     api-key: ${OPENAI_API_KEY:}
     model: ${OPENAI_MODEL:gpt-5-mini}
   voice:
-    base-url: ${KUPPA_VOICE_BASE_URL:http://localhost:5000}
-    voice: ${KUPPA_VOICE_MODEL:en_US-amy-medium}
-    port: ${KUPPA_VOICE_PORT:5000}
+    enabled: ${KUPPA_VOICE_ENABLED:true}
     auto-start: ${KUPPA_VOICE_AUTO_START:true}
+    base-url: ${KUPPA_VOICE_BASE_URL:http://localhost:5000}
+    port: ${KUPPA_VOICE_PORT:5000}
     python-command: ${KUPPA_VOICE_PYTHON:python3}
+    voice: ${KUPPA_VOICE_MODEL:en_US-amy-medium}
     length-scale: ${KUPPA_VOICE_LENGTH_SCALE:1.04}
     noise-scale: ${KUPPA_VOICE_NOISE_SCALE:0.55}
     noise-w-scale: ${KUPPA_VOICE_NOISE_W_SCALE:0.72}
