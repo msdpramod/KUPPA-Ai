@@ -1,5 +1,6 @@
 package ai.kuppa.conversation;
 
+import ai.kuppa.memory.MemoryPromptFormatter;
 import ai.kuppa.memory.PersonaMemory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,12 +22,15 @@ public class OllamaConversationService {
     private final HttpClient httpClient;
     private final URI chatUri;
     private final String model;
+    private final MemoryPromptFormatter memoryFormatter;
 
     public OllamaConversationService(
             ObjectMapper objectMapper,
+            MemoryPromptFormatter memoryFormatter,
             @Value("${kuppa.ollama.base-url:http://localhost:11434}") String baseUrl,
             @Value("${kuppa.ollama.model:llama3.2}") String model) {
         this.objectMapper = objectMapper;
+        this.memoryFormatter = memoryFormatter;
         this.model = model;
         this.chatUri = URI.create(baseUrl.replaceAll("/$", "") + "/api/chat");
         this.httpClient = HttpClient.newBuilder()
@@ -35,11 +39,7 @@ public class OllamaConversationService {
     }
 
     public String answer(String currentMessage, List<PersonaMemory> memory) throws Exception {
-        String persona = memory.stream()
-                .limit(20)
-                .map(m -> m.getCategory() + ": " + m.getContent())
-                .reduce((a, b) -> a + "\n" + b)
-                .orElse("No confirmed persona memory yet.");
+        String persona = memoryFormatter.format(memory);
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("model", model);
@@ -48,7 +48,7 @@ public class OllamaConversationService {
                 Map.of("role", "system", "content",
                         "You are KUPPA AI, a private one-on-one personal assistant. Speak naturally, clearly, and concisely. " +
                         "Answer the user's actual question directly. Never claim an external action happened unless it passed KUPPA AI's approval system. " +
-                        "Use these persona memories only when relevant:\n" + persona),
+                        "Use persona memory only when relevant. Treat tentative memory as a hypothesis, not a fact, and ask or hedge when it materially affects an answer.\n" + persona),
                 Map.of("role", "user", "content", currentMessage)
         ));
 
