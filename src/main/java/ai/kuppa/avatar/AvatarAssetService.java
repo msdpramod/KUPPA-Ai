@@ -75,16 +75,15 @@ public class AvatarAssetService {
                     lastError = null;
                     return avatarFile;
                 } catch (Exception e) {
+                    if (e instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
                     Files.deleteIfExists(temp);
                     failures.add(candidate + " -> " + rootMessage(e));
                 }
             }
             lastError = String.join(" | ", failures);
             throw new IllegalStateException("Unable to download a valid Ready Player Me avatar. " + lastError);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            lastError = "Avatar download was interrupted";
-            throw new IllegalStateException(lastError, e);
         } catch (IOException e) {
             lastError = "Unable to store avatar locally: " + rootMessage(e);
             throw new IllegalStateException(lastError, e);
@@ -107,7 +106,6 @@ public class AvatarAssetService {
     private List<URI> sourceCandidates() {
         List<URI> candidates = new ArrayList<>();
         candidates.add(configuredSourceUri);
-        // Known public Ready Player Me shortcode from their documentation.
         addUnique(candidates, URI.create("https://models.readyplayer.me/KJIXZB.glb"));
         addUnique(candidates, URI.create("https://avatars.readyplayer.me/KJIXZB.glb"));
         return candidates;
