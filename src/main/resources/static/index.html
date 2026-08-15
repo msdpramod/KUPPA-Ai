@@ -11,43 +11,75 @@
 </head>
 <body><div class="shell">
   <h1 class="brand">KUPPA AI</h1><p class="muted">Your personal digital human. Think with you, act only with approval.</p>
-  <div class="stage"><div class="grid"></div><canvas id="avatar3d"></canvas><div class="avatar-badge" id="avatarStatus">Loading 3D avatar…</div></div>
+  <div class="stage"><div class="grid"></div><canvas id="avatar3d"></canvas><div class="avatar-badge" id="avatarStatus">Starting local 3D avatar…</div></div>
   <div class="status" id="status">Ready</div><div class="transcript" id="transcript">Press Start conversation, allow microphone access, and speak naturally.</div>
   <div class="voice-badge"><span class="dot" id="voiceDot"></span><span id="voiceStatus">KUPPA neural voice required</span></div><br/>
   <button class="start" id="startButton" onclick="toggleConversation()">Start conversation</button><div class="approval" id="approvals"></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 let recognition=null,active=false,listening=false,busy=false,currentAudio=null;
-let scene,camera,renderer,avatarModel,clock=new THREE.Clock(),avatarState='idle',faceMeshes=[],blinkTimer=0;
+let scene,camera,renderer,avatarRoot,headRoot,jaw,leftEye,rightEye,leftPupil,rightPupil,clock,avatarState='idle',blinkUntil=0,nextBlink=2;
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 const statusEl=document.getElementById('status'),transcript=document.getElementById('transcript'),startButton=document.getElementById('startButton'),voiceStatus=document.getElementById('voiceStatus'),voiceDot=document.getElementById('voiceDot'),avatarStatus=document.getElementById('avatarStatus');
 
+function mat(color,rough=.6,metal=0){return new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal})}
+function mesh(geo,material,parent,pos,scale,rot){const m=new THREE.Mesh(geo,material);if(pos)m.position.set(...pos);if(scale)m.scale.set(...scale);if(rot)m.rotation.set(...rot);parent.add(m);return m}
+function sphere(parent,pos,scale,material,segments=48){return mesh(new THREE.SphereGeometry(1,segments,segments),material,parent,pos,scale)}
+
 function initAvatar(){
   const canvas=document.getElementById('avatar3d');
-  renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
-  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(28,1,.1,100);camera.position.set(0,1.55,3.2);camera.lookAt(0,1.42,0);
-  scene.add(new THREE.HemisphereLight(0xd8f3ff,0x172331,1.3));const key=new THREE.DirectionalLight(0xffffff,1.5);key.position.set(2.5,4,3);scene.add(key);const rim=new THREE.DirectionalLight(0x74dfff,.8);rim.position.set(-3,2,-2);scene.add(rim);
-  resizeAvatar();window.addEventListener('resize',resizeAvatar);
-  if(!THREE.GLTFLoader){avatarStatus.textContent='3D loader unavailable';avatarStatus.classList.add('error');return;}
-  const url='https://models.readyplayer.me/KJIXZB.glb?morphTargets=ARKit,Oculus%20Visemes&textureAtlas=1024&textureSizeLimit=1024';
-  new THREE.GLTFLoader().load(url,gltf=>{
-    avatarModel=gltf.scene;scene.add(avatarModel);
-    const box=new THREE.Box3().setFromObject(avatarModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-    avatarModel.position.x-=center.x;avatarModel.position.z-=center.z;avatarModel.position.y-=box.min.y;
-    const targetHeight=2.25,scale=targetHeight/Math.max(size.y,.001);avatarModel.scale.setScalar(scale);
-    faceMeshes=[];avatarModel.traverse(o=>{if(o.isMesh){o.frustumCulled=false;if(o.morphTargetDictionary)faceMeshes.push(o)}});
-    avatarStatus.textContent='KUPPA 3D avatar online';
-    animateAvatar();
-  },xhr=>{if(xhr.total)avatarStatus.textContent='Loading avatar '+Math.round(xhr.loaded/xhr.total*100)+'%';},err=>{console.error(err);avatarStatus.textContent='3D avatar failed to load';avatarStatus.classList.add('error')});
-  if(!renderer.setAnimationLoop) animateAvatar();
+  if(!window.THREE){avatarStatus.textContent='Three.js failed to load';avatarStatus.classList.add('error');return}
+  renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
+  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(30,1,.1,100);camera.position.set(0,1.62,3.35);camera.lookAt(0,1.42,0);
+  scene.add(new THREE.HemisphereLight(0xe8f7ff,0x132331,1.25));const key=new THREE.DirectionalLight(0xfff3e9,1.55);key.position.set(2.7,4.2,3.5);scene.add(key);const rim=new THREE.DirectionalLight(0x66ddff,.9);rim.position.set(-3,2.3,-2.4);scene.add(rim);const fill=new THREE.PointLight(0xffc8b0,.45,8);fill.position.set(-1.5,1.8,2.2);scene.add(fill);
+  buildHumanoid();resizeAvatar();window.addEventListener('resize',resizeAvatar);clock=new THREE.Clock();avatarStatus.textContent='KUPPA local 3D avatar online';animateAvatar();
 }
+
+function buildHumanoid(){
+  avatarRoot=new THREE.Group();avatarRoot.position.y=-.06;scene.add(avatarRoot);
+  const skin=mat(0xd49a79,.72),skinLight=mat(0xe3ad8c,.7),hair=mat(0x111820,.56),shirt=mat(0x142c3a,.5,.08),shirt2=mat(0x0b1720,.48,.13),white=mat(0xf3f5f2,.42),iris=mat(0x49727a,.35),pupil=mat(0x080b0e,.25),lip=mat(0x7f3e43,.55),mouthDark=mat(0x32171a,.7),brow=mat(0x2a1c18,.7);
+  // torso and shoulders
+  sphere(avatarRoot,[0,.69,0],[.72,.72,.42],shirt,56);
+  sphere(avatarRoot,[-.63,.71,0],[.34,.45,.34],shirt2,42);sphere(avatarRoot,[.63,.71,0],[.34,.45,.34],shirt2,42);
+  mesh(new THREE.CylinderGeometry(.19,.24,.34,32),skin,avatarRoot,[0,1.16,0],[1,1,1]);
+  // subtle chest core
+  const core=mesh(new THREE.TorusGeometry(.13,.018,16,64),mat(0x75e9ff,.3,.35),avatarRoot,[0,.78,.42],[1,1,1],[Math.PI/2,0,0]);
+  const coreDot=sphere(avatarRoot,[0,.78,.405],[.055,.055,.02],mat(0x88f1ff,.2,.2),32);
+  // head hierarchy
+  headRoot=new THREE.Group();headRoot.position.set(0,1.62,0);avatarRoot.add(headRoot);
+  const face=sphere(headRoot,[0,0,0],[.43,.53,.39],skinLight,64);
+  // ears
+  sphere(headRoot,[-.415,-.01,0],[.075,.125,.06],skin,36);sphere(headRoot,[.415,-.01,0],[.075,.125,.06],skin,36);
+  // hair mass + fringe
+  sphere(headRoot,[0,.33,-.015],[.445,.31,.395],hair,56);sphere(headRoot,[-.17,.36,.12],[.28,.20,.20],hair,48);sphere(headRoot,[.16,.39,.10],[.31,.18,.19],hair,48);
+  // jawline / chin shaping
+  sphere(headRoot,[0,-.33,.015],[.30,.20,.31],skinLight,48);
+  // nose
+  const nose=sphere(headRoot,[0,-.02,.375],[.065,.13,.07],skin,40);nose.rotation.x=-.1;
+  // eyes
+  leftEye=sphere(headRoot,[-.16,.09,.345],[.115,.062,.045],white,40);rightEye=sphere(headRoot,[.16,.09,.345],[.115,.062,.045],white,40);
+  const leftIris=sphere(headRoot,[-.16,.09,.386],[.047,.047,.018],iris,36);const rightIris=sphere(headRoot,[.16,.09,.386],[.047,.047,.018],iris,36);
+  leftPupil=sphere(headRoot,[-.16,.09,.402],[.022,.022,.009],pupil,32);rightPupil=sphere(headRoot,[.16,.09,.402],[.022,.022,.009],pupil,32);
+  sphere(headRoot,[-.177,.112,.412],[.008,.008,.004],white,20);sphere(headRoot,[.143,.112,.412],[.008,.008,.004],white,20);
+  // brows
+  mesh(new THREE.CapsuleGeometry(.025,.15,6,12),brow,headRoot,[-.16,.205,.365],[1,1,1],[0,0,Math.PI/2+.12]);
+  mesh(new THREE.CapsuleGeometry(.025,.15,6,12),brow,headRoot,[.16,.205,.365],[1,1,1],[0,0,Math.PI/2-.12]);
+  // lips and jaw opening
+  sphere(headRoot,[0,-.205,.371],[.14,.032,.026],lip,36);
+  jaw=new THREE.Group();jaw.position.set(0,-.225,.377);headRoot.add(jaw);
+  sphere(jaw,[0,-.012,0],[.105,.02,.014],mouthDark,30);
+  sphere(jaw,[0,-.035,.004],[.11,.026,.017],lip,30);
+  // cheek warmth
+  const cheekMat=new THREE.MeshBasicMaterial({color:0xc7776d,transparent:true,opacity:.12});sphere(headRoot,[-.25,-.07,.34],[.12,.07,.018],cheekMat,32);sphere(headRoot,[.25,-.07,.34],[.12,.07,.018],cheekMat,32);
+  // floor glow
+  const glow=new THREE.Mesh(new THREE.RingGeometry(.65,1.12,64),new THREE.MeshBasicMaterial({color:0x62dfff,transparent:true,opacity:.08,side:THREE.DoubleSide}));glow.rotation.x=-Math.PI/2;glow.position.y=.04;avatarRoot.add(glow);
+  avatarRoot.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false}});
+}
+
 function resizeAvatar(){if(!renderer||!camera)return;const canvas=renderer.domElement,w=canvas.clientWidth||canvas.parentElement.clientWidth,h=canvas.clientHeight||canvas.parentElement.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
-function morph(names,value){for(const mesh of faceMeshes){const d=mesh.morphTargetDictionary||{},inf=mesh.morphTargetInfluences||[];for(const n of names){if(d[n]!==undefined)inf[d[n]]=value}}}
-function animateAvatar(){if(!renderer||!scene||!camera)return;const t=clock.getElapsedTime();if(avatarModel){avatarModel.position.y=Math.sin(t*1.3)*.008;avatarModel.rotation.y=avatarState==='listening'?Math.sin(t*1.8)*.025:avatarState==='thinking'?.04+Math.sin(t)*.012:Math.sin(t*.45)*.008;const talk=avatarState==='speaking'?(0.18+Math.abs(Math.sin(t*11))*.55):0;morph(['jawOpen','viseme_aa','mouthOpen'],talk);blinkTimer-=.016;if(blinkTimer<=0){morph(['eyeBlinkLeft','eyeBlinkRight'],1);setTimeout(()=>morph(['eyeBlinkLeft','eyeBlinkRight'],0),120);blinkTimer=2.5+Math.random()*3.5}}
-  renderer.render(scene,camera);requestAnimationFrame(animateAvatar)
-}
+function animateAvatar(){if(!renderer||!scene||!camera)return;const t=clock.getElapsedTime();if(avatarRoot){avatarRoot.position.y=-.06+Math.sin(t*1.25)*.01;avatarRoot.rotation.y=Math.sin(t*.42)*.012;if(headRoot){if(avatarState==='listening'){headRoot.rotation.y=Math.sin(t*1.8)*.055;headRoot.rotation.z=Math.sin(t*1.2)*.012}else if(avatarState==='thinking'){headRoot.rotation.y=.075+Math.sin(t*.8)*.018;headRoot.rotation.z=-.025}else{headRoot.rotation.y=Math.sin(t*.55)*.018;headRoot.rotation.z=0}const talk=avatarState==='speaking'?(.28+Math.abs(Math.sin(t*10.5))*.72):0;jaw.scale.y=.8+talk*.9;jaw.position.y=-.225-talk*.025;const now=t;if(now>nextBlink&&blinkUntil===0){blinkUntil=now+.11;nextBlink=now+2.2+Math.random()*3.8}const blinking=blinkUntil>0&&now<blinkUntil;if(blinkUntil>0&&now>=blinkUntil)blinkUntil=0;const sy=blinking?.08:1;leftEye.scale.y=sy;rightEye.scale.y=sy;const glance=avatarState==='thinking'?.015*Math.sin(t*1.1):.006*Math.sin(t*.7);leftPupil.position.x=-.16+glance;rightPupil.position.x=.16+glance;}}
+  renderer.render(scene,camera);requestAnimationFrame(animateAvatar)}
 function setState(cls,label){avatarState=cls||'idle';statusEl.textContent=label}
 
 if(SpeechRecognition){recognition=new SpeechRecognition();recognition.continuous=false;recognition.interimResults=true;recognition.lang='en-IN';recognition.onstart=()=>{listening=true;setState('listening','Listening…')};recognition.onresult=e=>{let t='',final=false;for(let i=e.resultIndex;i<e.results.length;i++){t+=e.results[i][0].transcript;if(e.results[i].isFinal)final=true}transcript.textContent='You: '+t;if(final&&!busy){recognition.stop();ask(t)}};recognition.onerror=e=>{if(e.error!=='aborted'&&active)setTimeout(listen,700)};recognition.onend=()=>{listening=false;if(active&&!busy)setTimeout(listen,350)}}else{startButton.disabled=true;transcript.textContent='Speech recognition is unavailable in this browser.'}
