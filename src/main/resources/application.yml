@@ -32,6 +32,7 @@ kuppa:
     base-url: ${KUPPA_VOICE_BASE_URL:http://localhost:5500}
     port: ${KUPPA_VOICE_PORT:5500}
     python-command: ${KUPPA_VOICE_PYTHON:python3}
+    data-dir: ${KUPPA_VOICE_DATA_DIR:${user.home}/.kuppa-ai/voices}
     voice: ${KUPPA_VOICE_MODEL:en_US-amy-medium}
     length-scale: ${KUPPA_VOICE_LENGTH_SCALE:1.04}
     noise-scale: ${KUPPA_VOICE_NOISE_SCALE:0.55}
