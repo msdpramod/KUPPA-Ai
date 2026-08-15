@@ -1,5 +1,6 @@
 package ai.kuppa.voice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,6 +19,7 @@ public class KuppaVoiceService {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final URI synthesizeUri;
+    private final URI infoUri;
     private final String voice;
     private final double lengthScale;
     private final double noiseScale;
@@ -34,7 +37,9 @@ public class KuppaVoiceService {
         this.lengthScale = lengthScale;
         this.noiseScale = noiseScale;
         this.noiseWScale = noiseWScale;
-        this.synthesizeUri = URI.create(baseUrl.replaceAll("/$", "") + "/synthesize");
+        String root = baseUrl.replaceAll("/$", "");
+        this.synthesizeUri = URI.create(root + "/synthesize");
+        this.infoUri = URI.create(root + "/info");
         this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
     }
 
@@ -59,7 +64,13 @@ public class KuppaVoiceService {
 
             HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new VoiceUnavailableException("Local KUPPA voice engine returned HTTP " + response.statusCode());
+                String details = new String(response.body(), StandardCharsets.UTF_8).trim();
+                if (details.length() > 300) details = details.substring(0, 300);
+                throw new VoiceUnavailableException("Piper returned HTTP " + response.statusCode() +
+                        (details.isBlank() ? "" : ": " + details));
+            }
+            if (response.body() == null || response.body().length < 44) {
+                throw new VoiceUnavailableException("Piper returned an empty or invalid WAV response");
             }
             return response.body();
         } catch (InterruptedException e) {
@@ -68,8 +79,44 @@ public class KuppaVoiceService {
         } catch (VoiceUnavailableException e) {
             throw e;
         } catch (Exception e) {
-            throw new VoiceUnavailableException("Local KUPPA voice engine is unavailable", e);
+            throw new VoiceUnavailableException("Cannot reach Piper at " + synthesizeUri + ": " + rootMessage(e), e);
         }
+    }
+
+    public Map<String, Object> status() {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("configuredVoice", voice);
+        result.put("endpoint", synthesizeUri.toString());
+        try {
+            HttpRequest request = HttpRequest.newBuilder(infoUri)
+                    .timeout(Duration.ofSeconds(3))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            result.put("reachable", response.statusCode() >= 200 && response.statusCode() < 300);
+            result.put("httpStatus", response.statusCode());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                try {
+                    JsonNode info = objectMapper.readTree(response.body());
+                    result.put("piperInfo", info);
+                } catch (Exception ignored) {
+                    result.put("piperInfo", response.body());
+                }
+            } else {
+                result.put("error", response.body());
+            }
+        } catch (Exception e) {
+            result.put("reachable", false);
+            result.put("error", rootMessage(e));
+        }
+        return result;
+    }
+
+    private String rootMessage(Throwable e) {
+        Throwable current = e;
+        while (current.getCause() != null) current = current.getCause();
+        String message = current.getMessage();
+        return message == null || message.isBlank() ? current.getClass().getSimpleName() : message;
     }
 
     private String normalizeForSpeech(String text) {
