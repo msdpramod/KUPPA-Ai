@@ -1,140 +1,32 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>KUPPA AI</title>
-  <style>
-    :root{color-scheme:dark;--cyan:#7be8ff;--panel:rgba(9,18,29,.82);--line:rgba(123,232,255,.18)}
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,sans-serif;background:radial-gradient(circle at 50% -15%,#213a52,#081019 48%,#030609);color:#eefbff;display:flex;justify-content:center;padding:24px}.shell{width:min(900px,100%);text-align:center}.brand{letter-spacing:.16em;font-size:clamp(30px,4vw,46px);margin:5px 0}.muted{color:#9bb3bf}.stage{height:590px;border:1px solid var(--line);border-radius:34px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 24%,rgba(123,232,255,.14),transparent 30%),linear-gradient(180deg,#122233,#050a10);box-shadow:0 34px 90px rgba(0,0,0,.48)}.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(123,232,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(123,232,255,.04) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(to bottom,transparent,#000 42%,#000)}#avatar3d{position:absolute;inset:0;width:100%;height:100%;display:block}.avatar-badge{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 12px;border-radius:999px;background:rgba(3,8,13,.72);border:1px solid var(--line);font-size:12px;color:#bfefff;backdrop-filter:blur(12px)}.avatar-badge.error{color:#ffb8bd;border-color:rgba(255,90,100,.35)}.status{margin:18px 0 10px;font-weight:800}.transcript{min-height:94px;padding:18px 20px;border:1px solid var(--line);border-radius:20px;background:var(--panel);font-size:1.08rem;line-height:1.6;text-align:left;backdrop-filter:blur(16px)}.start{margin-top:18px;border:1px solid rgba(123,232,255,.25);border-radius:999px;padding:15px 28px;background:linear-gradient(180deg,#17849b,#0b6579);color:white;font-weight:800;cursor:pointer;min-width:220px}.start.active{background:linear-gradient(180deg,#a83f4a,#742832)}.voice-badge{display:inline-flex;gap:8px;align-items:center;margin-top:12px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:#a9c5d0}.dot{width:8px;height:8px;border-radius:50%;background:#3fb950}.dot.offline{background:#da3633}.approval{text-align:left;margin-top:18px}.approval-card{background:rgba(15,25,35,.94);border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:10px}.approval-card button{border:0;border-radius:9px;padding:9px 12px;margin-right:8px;font-weight:700}.approve{background:#238636;color:#fff}.reject{background:#da3633;color:#fff}@media(max-width:720px){.stage{height:520px}}
-  </style>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>KUPPA AI</title>
+<style>
+:root{color-scheme:dark;--cyan:#7be8ff;--panel:rgba(9,18,29,.84);--line:rgba(123,232,255,.18)}*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,sans-serif;background:radial-gradient(circle at 50% -15%,#213a52,#081019 48%,#030609);color:#eefbff;display:flex;justify-content:center;padding:24px}.shell{width:min(900px,100%);text-align:center}.brand{letter-spacing:.16em;font-size:clamp(30px,4vw,46px);margin:5px 0}.muted{color:#9bb3bf}.stage{height:590px;border:1px solid var(--line);border-radius:34px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 24%,rgba(123,232,255,.14),transparent 30%),linear-gradient(180deg,#122233,#050a10);box-shadow:0 34px 90px rgba(0,0,0,.48)}.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(123,232,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(123,232,255,.04) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(to bottom,transparent,#000 42%,#000)}#avatar3d{position:absolute;inset:0;width:100%;height:100%;display:block}.badge{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 12px;border-radius:999px;background:rgba(3,8,13,.74);border:1px solid var(--line);font-size:12px;color:#bfefff}.badge.error{color:#ffb8bd}.status{margin:18px 0 10px;font-weight:800}.transcript{min-height:94px;padding:18px 20px;border:1px solid var(--line);border-radius:20px;background:var(--panel);font-size:1.08rem;line-height:1.6;text-align:left}.start{margin-top:18px;border:1px solid rgba(123,232,255,.25);border-radius:999px;padding:15px 28px;background:linear-gradient(180deg,#17849b,#0b6579);color:white;font-weight:800;cursor:pointer;min-width:220px}.start.active{background:linear-gradient(180deg,#a83f4a,#742832)}.voice-badge{display:inline-flex;gap:8px;align-items:center;margin-top:12px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:#a9c5d0}.dot{width:8px;height:8px;border-radius:50%;background:#3fb950}.dot.offline{background:#da3633}.approval{text-align:left;margin-top:18px}.approval-card{background:rgba(15,25,35,.94);border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:10px}.approval-card button{border:0;border-radius:9px;padding:9px 12px;margin-right:8px;font-weight:700}.approve{background:#238636;color:#fff}.reject{background:#da3633;color:#fff}@media(max-width:720px){.stage{height:520px}}
+</style>
 </head>
-<body><div class="shell">
-  <h1 class="brand">KUPPA AI</h1><p class="muted">Your personal digital human. Think with you, act only with approval.</p>
-  <div class="stage"><div class="grid"></div><canvas id="avatar3d"></canvas><div class="avatar-badge" id="avatarStatus">Starting refined Three.js humanoid…</div></div>
-  <div class="status" id="status">Ready</div><div class="transcript" id="transcript">Press Start conversation, allow microphone access, and speak naturally.</div>
-  <div class="voice-badge"><span class="dot" id="voiceDot"></span><span id="voiceStatus">KUPPA neural voice required</span></div><br/>
-  <button class="start" id="startButton" onclick="toggleConversation()">Start conversation</button><div class="approval" id="approvals"></div>
-</div>
+<body><div class="shell"><h1 class="brand">KUPPA AI</h1><p class="muted">Your personal digital human. Think with you, act only with approval.</p><div class="stage"><div class="grid"></div><canvas id="avatar3d"></canvas><div class="badge" id="avatarStatus">Loading local humanoid…</div></div><div class="status" id="status">Ready</div><div class="transcript" id="transcript">Press Start conversation, allow microphone access, and speak naturally.</div><div class="voice-badge"><span class="dot" id="voiceDot"></span><span id="voiceStatus">KUPPA neural voice required</span></div><br/><button class="start" id="startButton" onclick="toggleConversation()">Start conversation</button><div class="approval" id="approvals"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 let recognition=null,active=false,listening=false,busy=false,currentAudio=null;
-let scene,camera,renderer,avatarRoot,headRoot,jaw,leftPupil,rightPupil,leftUpperLid,rightUpperLid,leftLowerLid,rightLowerLid,upperLip,lowerLip,clock,avatarState='idle',blinkUntil=0,nextBlink=2;
+let scene,camera,renderer,avatarModel,clock,avatarState='idle',faceMeshes=[];
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 const statusEl=document.getElementById('status'),transcript=document.getElementById('transcript'),startButton=document.getElementById('startButton'),voiceStatus=document.getElementById('voiceStatus'),voiceDot=document.getElementById('voiceDot'),avatarStatus=document.getElementById('avatarStatus');
 
-function mat(color,rough=.6,metal=0){return new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal})}
-function mesh(geo,material,parent,pos,scale,rot){const m=new THREE.Mesh(geo,material);if(pos)m.position.set(...pos);if(scale)m.scale.set(...scale);if(rot)m.rotation.set(...rot);parent.add(m);return m}
-function sphere(parent,pos,scale,material,segments=48){return mesh(new THREE.SphereGeometry(1,segments,segments),material,parent,pos,scale)}
-function box(parent,pos,scale,material,rot){return mesh(new THREE.BoxGeometry(1,1,1),material,parent,pos,scale,rot)}
-
-function initAvatar(){
-  try{
-    const canvas=document.getElementById('avatar3d');
-    if(!window.THREE)throw new Error('Three.js failed to load');
-    renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.06;
-    scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(28,1,.1,100);camera.position.set(0,1.66,3.45);camera.lookAt(0,1.43,0);
-    scene.add(new THREE.HemisphereLight(0xeaf8ff,0x101c27,1.15));
-    const key=new THREE.DirectionalLight(0xffefe5,1.65);key.position.set(2.7,4.4,3.3);scene.add(key);
-    const fill=new THREE.DirectionalLight(0xbcdfff,.55);fill.position.set(-2.2,2.7,2.2);scene.add(fill);
-    const rim=new THREE.DirectionalLight(0x62ddff,1.0);rim.position.set(-3.1,2.7,-2.5);scene.add(rim);
-    buildHumanoid();resizeAvatar();window.addEventListener('resize',resizeAvatar);clock=new THREE.Clock();avatarStatus.textContent='KUPPA refined Three.js humanoid online';avatarStatus.classList.remove('error');animateAvatar();
-  }catch(e){console.error('KUPPA avatar startup failed',e);avatarStatus.textContent='Avatar error: '+(e?.message||e);avatarStatus.classList.add('error')}
-}
-
-function buildHumanoid(){
-  avatarRoot=new THREE.Group();avatarRoot.position.y=-.10;scene.add(avatarRoot);
-  const skin=mat(0xc98969,.68),skinMid=mat(0xd79a79,.66),skinLight=mat(0xe2ad8e,.64),hair=mat(0x11161c,.5),shirt=mat(0x122a39,.46,.08),shirtDark=mat(0x091822,.48,.14),white=mat(0xf6f3ee,.35),iris=mat(0x3f717c,.28),pupil=mat(0x090b0d,.2),lip=mat(0x92565c,.5),mouthDark=mat(0x2b1518,.74),brow=mat(0x34231e,.65),lid=mat(0xc98668,.7);
-
-  // Tapered torso, chest and shoulders
-  sphere(avatarRoot,[0,.66,-.02],[.69,.67,.38],shirt,56);
-  sphere(avatarRoot,[0,.91,-.015],[.53,.34,.34],shirt,48);
-  sphere(avatarRoot,[-.59,.73,-.01],[.32,.39,.31],shirtDark,42);sphere(avatarRoot,[.59,.73,-.01],[.32,.39,.31],shirtDark,42);
-  box(avatarRoot,[0,.49,.29],[.58,.20,.12],shirtDark,[.05,0,0]);
-  // clavicle / neck transition
-  sphere(avatarRoot,[0,1.12,0],[.25,.16,.22],skin,40);
-  mesh(new THREE.CylinderGeometry(.16,.21,.34,40),skinMid,avatarRoot,[0,1.22,0],[1,1,1]);
-  // chest core
-  mesh(new THREE.TorusGeometry(.105,.014,14,56),mat(0x72e8ff,.28,.35),avatarRoot,[0,.75,.39],[1,1,1],[Math.PI/2,0,0]);
-  sphere(avatarRoot,[0,.75,.382],[.040,.040,.012],mat(0xa7f4ff,.18,.12),28);
-
-  // Head group
-  headRoot=new THREE.Group();headRoot.position.set(0,1.67,0);avatarRoot.add(headRoot);
-
-  // Cranium and facial structure
-  sphere(headRoot,[0,.055,-.015],[.405,.505,.365],skinMid,72);
-  sphere(headRoot,[0,-.23,.035],[.34,.27,.32],skinLight,64); // lower face
-  sphere(headRoot,[0,-.37,.015],[.235,.12,.245],skinLight,48); // chin
-  sphere(headRoot,[-.305,-.06,.08],[.115,.19,.18],skinLight,48);sphere(headRoot,[.305,-.06,.08],[.115,.19,.18],skinLight,48); // cheeks
-  sphere(headRoot,[-.37,-.02,-.01],[.065,.115,.052],skin,36);sphere(headRoot,[.37,-.02,-.01],[.065,.115,.052],skin,36); // ears
-
-  // Hair silhouette: crown, temples, fringe
-  sphere(headRoot,[0,.39,-.035],[.425,.26,.355],hair,60);
-  sphere(headRoot,[-.25,.31,.06],[.22,.22,.24],hair,50);sphere(headRoot,[.24,.33,.045],[.24,.23,.245],hair,50);
-  sphere(headRoot,[0,.49,-.055],[.33,.16,.29],hair,48);
-  sphere(headRoot,[-.33,.18,-.035],[.10,.25,.12],hair,42);sphere(headRoot,[.33,.18,-.035],[.10,.25,.12],hair,42);
-  // side swept fringe
-  sphere(headRoot,[-.10,.28,.245],[.27,.095,.075],hair,42);sphere(headRoot,[.15,.30,.235],[.19,.08,.065],hair,38);
-
-  // Brow ridge / temples
-  sphere(headRoot,[-.17,.155,.24],[.18,.055,.07],skinLight,36);sphere(headRoot,[.17,.155,.24],[.18,.055,.07],skinLight,36);
-
-  // Eye sockets and eyes
-  sphere(headRoot,[-.155,.075,.325],[.112,.058,.040],white,44);sphere(headRoot,[.155,.075,.325],[.112,.058,.040],white,44);
-  sphere(headRoot,[-.155,.075,.364],[.046,.046,.018],iris,36);sphere(headRoot,[.155,.075,.364],[.046,.046,.018],iris,36);
-  leftPupil=sphere(headRoot,[-.155,.075,.380],[.021,.021,.009],pupil,30);rightPupil=sphere(headRoot,[.155,.075,.380],[.021,.021,.009],pupil,30);
-  sphere(headRoot,[-.169,.091,.390],[.007,.007,.004],white,18);sphere(headRoot,[.141,.091,.390],[.007,.007,.004],white,18);
-
-  // Eyelids independent from eyeballs
-  leftUpperLid=sphere(headRoot,[-.155,.108,.344],[.119,.030,.046],lid,38);rightUpperLid=sphere(headRoot,[.155,.108,.344],[.119,.030,.046],lid,38);
-  leftLowerLid=sphere(headRoot,[-.155,.041,.342],[.115,.018,.042],skinLight,36);rightLowerLid=sphere(headRoot,[.155,.041,.342],[.115,.018,.042],skinLight,36);
-
-  // Eyebrows with softened geometry
-  const browGeo=new THREE.BoxGeometry(.17,.026,.022);
-  mesh(browGeo,brow,headRoot,[-.155,.194,.326],[1,1,1],[0,0,-.11]);mesh(browGeo,brow,headRoot,[.155,.194,.326],[1,1,1],[0,0,.11]);
-
-  // Nose bridge, dorsum, tip and nostrils
-  sphere(headRoot,[0,.055,.315],[.045,.145,.047],skinLight,40);
-  sphere(headRoot,[0,-.055,.346],[.064,.072,.060],skinMid,40);
-  sphere(headRoot,[-.040,-.085,.353],[.030,.021,.018],skin,28);sphere(headRoot,[.040,-.085,.353],[.030,.021,.018],skin,28);
-  sphere(headRoot,[-.045,-.088,.367],[.012,.009,.007],mouthDark,20);sphere(headRoot,[.045,-.088,.367],[.012,.009,.007],mouthDark,20);
-
-  // Philtrum
-  box(headRoot,[0,-.145,.353],[.022,.050,.014],skin,[0,0,0]);
-
-  // Separate lips + mouth interior
-  upperLip=sphere(headRoot,[0,-.205,.357],[.122,.026,.026],lip,40);
-  lowerLip=sphere(headRoot,[0,-.242,.357],[.126,.030,.027],lip,40);
-  jaw=new THREE.Group();jaw.position.set(0,-.225,.353);headRoot.add(jaw);
-  sphere(jaw,[0,-.006,.007],[.098,.017,.015],mouthDark,34);
-
-  // Subtle facial shading forms
-  const warmth=new THREE.MeshBasicMaterial({color:0xbf6e61,transparent:true,opacity:.09});
-  sphere(headRoot,[-.235,-.085,.315],[.10,.060,.014],warmth,32);sphere(headRoot,[.235,-.085,.315],[.10,.060,.014],warmth,32);
-
-  // Ground glow
-  const glow=new THREE.Mesh(new THREE.RingGeometry(.62,1.08,64),new THREE.MeshBasicMaterial({color:0x62dfff,transparent:true,opacity:.075,side:THREE.DoubleSide}));glow.rotation.x=-Math.PI/2;glow.position.y=.04;avatarRoot.add(glow);
-}
-
-function resizeAvatar(){if(!renderer||!camera)return;const canvas=renderer.domElement,w=canvas.clientWidth||canvas.parentElement.clientWidth,h=canvas.clientHeight||canvas.parentElement.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
-function animateAvatar(){if(!renderer||!scene||!camera)return;const t=clock.getElapsedTime();if(avatarRoot){avatarRoot.position.y=-.10+Math.sin(t*1.18)*.008;avatarRoot.rotation.y=Math.sin(t*.38)*.010;if(headRoot){if(avatarState==='listening'){headRoot.rotation.y=Math.sin(t*1.55)*.040;headRoot.rotation.z=Math.sin(t*1.1)*.009}else if(avatarState==='thinking'){headRoot.rotation.y=.055+Math.sin(t*.72)*.014;headRoot.rotation.z=-.018}else{headRoot.rotation.y=Math.sin(t*.48)*.014;headRoot.rotation.z=Math.sin(t*.35)*.004}
-      const talk=avatarState==='speaking'?(.18+Math.abs(Math.sin(t*9.5))*.55):0;
-      jaw.position.y=-.225-talk*.018;upperLip.position.y=-.205-talk*.004;lowerLip.position.y=-.242-talk*.020;lowerLip.scale.y=1+talk*.35;
-      const now=t;if(now>nextBlink&&blinkUntil===0){blinkUntil=now+.115;nextBlink=now+2.4+Math.random()*3.4}const blinking=blinkUntil>0&&now<blinkUntil;if(blinkUntil>0&&now>=blinkUntil)blinkUntil=0;
-      const lidDrop=blinking?.065:0;leftUpperLid.position.y=.108-lidDrop;rightUpperLid.position.y=.108-lidDrop;leftLowerLid.position.y=.041+(blinking?.030:0);rightLowerLid.position.y=.041+(blinking?.030:0);
-      const glance=avatarState==='thinking'?.013*Math.sin(t*.95):.005*Math.sin(t*.62);leftPupil.position.x=-.155+glance;rightPupil.position.x=.155+glance;
-    }}renderer.render(scene,camera);requestAnimationFrame(animateAvatar)}
-function setState(cls,label){avatarState=cls||'idle';statusEl.textContent=label}
+function initAvatar(){try{if(!window.THREE||!THREE.GLTFLoader)throw new Error('Three.js avatar loader unavailable');const canvas=document.getElementById('avatar3d');renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(28,1,.1,100);camera.position.set(0,1.5,3.25);camera.lookAt(0,1.42,0);scene.add(new THREE.HemisphereLight(0xe9f7ff,0x101c28,1.35));const key=new THREE.DirectionalLight(0xfff1e8,1.65);key.position.set(2.5,4,3);scene.add(key);const rim=new THREE.DirectionalLight(0x6be0ff,.9);rim.position.set(-3,2,-2);scene.add(rim);resizeAvatar();window.addEventListener('resize',resizeAvatar);clock=new THREE.Clock();new THREE.GLTFLoader().load('/api/avatar/model',gltf=>{avatarModel=gltf.scene;const box=new THREE.Box3().setFromObject(avatarModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());const scale=2.35/Math.max(size.y,.001);avatarModel.scale.setScalar(scale);avatarModel.position.x=-center.x*scale;avatarModel.position.z=-center.z*scale;avatarModel.position.y=-box.min.y*scale-.12;scene.add(avatarModel);faceMeshes=[];avatarModel.traverse(o=>{if(o.isMesh&&o.morphTargetDictionary)faceMeshes.push(o)});avatarStatus.textContent='KUPPA Ready Player Me humanoid online';avatarStatus.classList.remove('error');animateAvatar()},undefined,e=>{throwAvatar(e)});}catch(e){throwAvatar(e)}}
+function throwAvatar(e){console.error(e);avatarStatus.textContent='Avatar error: '+(e?.message||e);avatarStatus.classList.add('error')}
+function resizeAvatar(){if(!renderer||!camera)return;const c=renderer.domElement,w=c.clientWidth||c.parentElement.clientWidth,h=c.clientHeight||c.parentElement.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+function morph(names,value){for(const m of faceMeshes){const d=m.morphTargetDictionary||{},i=m.morphTargetInfluences||[];for(const n of names)if(d[n]!==undefined)i[d[n]]=value}}
+function animateAvatar(){if(!renderer)return;const t=clock.getElapsedTime();if(avatarModel){avatarModel.position.y+=Math.sin(t*1.2)*.0006;avatarModel.rotation.y=avatarState==='listening'?Math.sin(t*1.6)*.025:avatarState==='thinking'?.035+Math.sin(t*.8)*.01:Math.sin(t*.45)*.006;const talk=avatarState==='speaking'?(0.12+Math.abs(Math.sin(t*10))*.55):0;morph(['jawOpen','viseme_aa','mouthOpen'],talk);const blink=(Math.sin(t*.65)>0.995)?1:0;morph(['eyeBlinkLeft','eyeBlinkRight'],blink)}renderer.render(scene,camera);requestAnimationFrame(animateAvatar)}
+function setState(s,label){avatarState=s||'idle';statusEl.textContent=label}
 
 if(SpeechRecognition){recognition=new SpeechRecognition();recognition.continuous=false;recognition.interimResults=true;recognition.lang='en-IN';recognition.onstart=()=>{listening=true;setState('listening','Listening…')};recognition.onresult=e=>{let t='',final=false;for(let i=e.resultIndex;i<e.results.length;i++){t+=e.results[i][0].transcript;if(e.results[i].isFinal)final=true}transcript.textContent='You: '+t;if(final&&!busy){recognition.stop();ask(t)}};recognition.onerror=e=>{if(e.error!=='aborted'&&active)setTimeout(listen,700)};recognition.onend=()=>{listening=false;if(active&&!busy)setTimeout(listen,350)}}else{startButton.disabled=true;transcript.textContent='Speech recognition is unavailable in this browser.'}
-function toggleConversation(){active?endConversation():startConversation()}
-function startConversation(){active=true;startButton.textContent='End conversation';startButton.classList.add('active');transcript.textContent='KUPPA: I am listening.';listen()}
-function endConversation(){active=false;busy=false;recognition?.stop();if(currentAudio){currentAudio.pause();currentAudio=null}startButton.textContent='Start conversation';startButton.classList.remove('active');setState('idle','Conversation ended')}
-function listen(){if(!active||busy||listening||!recognition)return;try{recognition.start()}catch(e){}}
+function toggleConversation(){active?endConversation():startConversation()}function startConversation(){active=true;startButton.textContent='End conversation';startButton.classList.add('active');transcript.textContent='KUPPA: I am listening.';listen()}function endConversation(){active=false;busy=false;recognition?.stop();if(currentAudio){currentAudio.pause();currentAudio=null}startButton.textContent='Start conversation';startButton.classList.remove('active');setState('idle','Conversation ended')}function listen(){if(!active||busy||listening||!recognition)return;try{recognition.start()}catch(e){}}
 async function ask(message){const clean=(message||'').trim();if(!clean||busy||!active)return;busy=true;setState('thinking','Thinking…');try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:clean})});const data=await r.json();if(!r.ok)throw new Error(data.error||'Request failed');transcript.textContent='KUPPA: '+data.message;setState('speaking','Speaking…');await speak(data.message);await loadApprovals()}catch(e){transcript.textContent='KUPPA: '+e.message;setState('idle','Conversation error')}finally{busy=false;if(active)setTimeout(listen,350)}}
-async function speak(text){if(!active)return;const r=await fetch('/api/voice/synthesize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});if(!r.ok){let detail='';try{detail=(await r.json()).error||''}catch(e){}voiceStatus.textContent='KUPPA neural voice offline';voiceDot.classList.add('offline');throw new Error(detail||'KUPPA neural voice engine is offline.')}const blob=await r.blob();const url=URL.createObjectURL(blob);voiceStatus.textContent='KUPPA neural voice';voiceDot.classList.remove('offline');await new Promise((resolve,reject)=>{const a=new Audio(url);currentAudio=a;a.onended=()=>{URL.revokeObjectURL(url);currentAudio=null;setState('idle','Ready');resolve()};a.onerror=()=>{URL.revokeObjectURL(url);currentAudio=null;reject(new Error('KUPPA neural voice audio playback failed.'))};a.play().catch(reject)})}
-async function loadApprovals(){try{const r=await fetch('/api/actions');const actions=await r.json();const pending=actions.filter(x=>x.status==='PENDING_APPROVAL');document.getElementById('approvals').innerHTML=pending.map(x=>`<div class="approval-card"><b>Approval needed</b><p>${esc(x.summary)}</p><button class="approve" onclick="decide('${x.id}','approve')">Approve</button><button class="reject" onclick="decide('${x.id}','reject')">Reject</button></div>`).join('')}catch(e){}}
-async function decide(id,op){busy=true;recognition?.stop();try{await fetch(`/api/actions/${id}/${op}`,{method:'POST'});const line=op==='approve'?'Approved. I will wait for your explicit execution command.':'Rejected.';transcript.textContent='KUPPA: '+line;setState('speaking','Speaking…');await speak(line);await loadApprovals()}finally{busy=false;if(active)setTimeout(listen,350)}}
-function esc(s){return String(s??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]))}
+async function speak(text){if(!active)return;const r=await fetch('/api/voice/synthesize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});if(!r.ok){let detail='';try{detail=(await r.json()).error||''}catch(e){}voiceStatus.textContent='KUPPA neural voice offline';voiceDot.classList.add('offline');throw new Error(detail||'KUPPA neural voice engine is offline.')}const blob=await r.blob(),url=URL.createObjectURL(blob);voiceStatus.textContent='KUPPA neural voice';voiceDot.classList.remove('offline');await new Promise((resolve,reject)=>{const a=new Audio(url);currentAudio=a;a.onended=()=>{URL.revokeObjectURL(url);currentAudio=null;setState('idle','Ready');resolve()};a.onerror=()=>{URL.revokeObjectURL(url);currentAudio=null;reject(new Error('KUPPA neural voice audio playback failed.'))};a.play().catch(reject)})}
+async function loadApprovals(){try{const r=await fetch('/api/actions'),actions=await r.json(),pending=actions.filter(x=>x.status==='PENDING_APPROVAL');document.getElementById('approvals').innerHTML=pending.map(x=>`<div class="approval-card"><b>Approval needed</b><p>${esc(x.summary)}</p><button class="approve" onclick="decide('${x.id}','approve')">Approve</button><button class="reject" onclick="decide('${x.id}','reject')">Reject</button></div>`).join('')}catch(e){}}
+async function decide(id,op){busy=true;recognition?.stop();try{await fetch(`/api/actions/${id}/${op}`,{method:'POST'});const line=op==='approve'?'Approved. I will wait for your explicit execution command.':'Rejected.';transcript.textContent='KUPPA: '+line;setState('speaking','Speaking…');await speak(line);await loadApprovals()}finally{busy=false;if(active)setTimeout(listen,350)}}function esc(s){return String(s??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]))}
 initAvatar();loadApprovals();
 </script></body></html>
