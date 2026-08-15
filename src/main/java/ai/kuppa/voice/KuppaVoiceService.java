@@ -71,11 +71,33 @@ public class KuppaVoiceService {
     public void warmUp() {
         if (!enabled || !autoStart) return;
         Thread starter = new Thread(() -> {
-            try { ensureVoiceEngine(); }
-            catch (Exception ignored) { }
+            try {
+                purgeLegacyRepoVoiceFiles();
+                ensureVoiceEngine();
+            } catch (Exception ignored) {
+            }
         }, "kuppa-voice-warmup");
         starter.setDaemon(true);
         starter.start();
+    }
+
+    public synchronized Map<String, Object> repairVoice() {
+        if (!enabled) throw new VoiceUnavailableException("KUPPA neural voice is disabled");
+        stopManagedPiper();
+        purgeLegacyRepoVoiceFiles();
+        deleteManagedVoiceFiles();
+        lastStartupError = null;
+        ensureVoiceFiles(true);
+        startPiper();
+        if (!waitForPiper(30)) {
+            String reason = lastStartupError == null || lastStartupError.isBlank()
+                    ? "Piper did not become healthy after a fresh download"
+                    : lastStartupError;
+            throw new VoiceUnavailableException("Neural voice repair failed: " + reason);
+        }
+        Map<String, Object> result = status();
+        result.put("repaired", true);
+        return result;
     }
 
     public byte[] synthesize(String text) {
@@ -118,16 +140,18 @@ public class KuppaVoiceService {
         if (isPiperReachable()) return;
         if (!autoStart) throw new VoiceUnavailableException("Piper is offline and auto-start is disabled");
 
+        purgeLegacyRepoVoiceFiles();
         ensureVoiceFiles(false);
         startPiper();
         if (waitForPiper(20)) return;
 
         if (isCorruptModelError(lastStartupError)) {
             stopManagedPiper();
+            deleteManagedVoiceFiles();
             ensureVoiceFiles(true);
             lastStartupError = null;
             startPiper();
-            if (waitForPiper(25)) return;
+            if (waitForPiper(30)) return;
         }
 
         String reason = lastStartupError == null || lastStartupError.isBlank()
@@ -182,8 +206,7 @@ public class KuppaVoiceService {
                     !Files.exists(config) || Files.size(config) < 100;
             if (!forceRepair && !missingOrTiny) return;
 
-            Files.deleteIfExists(model);
-            Files.deleteIfExists(config);
+            deleteManagedVoiceFiles();
             ProcessBuilder pb = new ProcessBuilder(
                     pythonCommand, "-m", "piper.download_voices",
                     voice, "--data-dir", dataDir.toString()
@@ -191,11 +214,12 @@ public class KuppaVoiceService {
             pb.redirectErrorStream(true);
             Process process = pb.start();
             String output = readAll(process);
-            if (!process.waitFor(120, TimeUnit.SECONDS)) {
+            if (!process.waitFor(180, TimeUnit.SECONDS)) {
                 process.destroyForcibly();
                 throw new VoiceUnavailableException("Timed out downloading Piper voice " + voice);
             }
-            if (process.exitValue() != 0 || !Files.exists(model) || Files.size(model) < 1_000_000) {
+            if (process.exitValue() != 0 || !Files.exists(model) || Files.size(model) < 1_000_000 ||
+                    !Files.exists(config) || Files.size(config) < 100) {
                 throw new VoiceUnavailableException("Failed to download Piper voice " + voice + ": " + output);
             }
         } catch (InterruptedException e) {
@@ -205,6 +229,26 @@ public class KuppaVoiceService {
             throw e;
         } catch (Exception e) {
             throw new VoiceUnavailableException("Unable to prepare Piper voice files in " + dataDir + ": " + rootMessage(e), e);
+        }
+    }
+
+    private void deleteManagedVoiceFiles() {
+        try {
+            Files.createDirectories(dataDir);
+            Files.deleteIfExists(dataDir.resolve(voice + ".onnx"));
+            Files.deleteIfExists(dataDir.resolve(voice + ".onnx.json"));
+        } catch (Exception e) {
+            throw new VoiceUnavailableException("Unable to delete corrupt Piper files in " + dataDir + ": " + rootMessage(e), e);
+        }
+    }
+
+    private void purgeLegacyRepoVoiceFiles() {
+        Path cwd = Path.of("").toAbsolutePath().normalize();
+        if (cwd.equals(dataDir)) return;
+        try {
+            Files.deleteIfExists(cwd.resolve(voice + ".onnx"));
+            Files.deleteIfExists(cwd.resolve(voice + ".onnx.json"));
+        } catch (Exception ignored) {
         }
     }
 
@@ -219,7 +263,7 @@ public class KuppaVoiceService {
             StringBuilder out = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
-                if (out.length() < 3000) out.append(line).append('\n');
+                if (out.length() < 5000) out.append(line).append('\n');
             }
             return out.toString().trim();
         } catch (Exception e) {
@@ -232,7 +276,7 @@ public class KuppaVoiceService {
             String line;
             StringBuilder recent = new StringBuilder();
             while ((line = reader.readLine()) != null) {
-                if (recent.length() > 1600) recent.delete(0, Math.min(800, recent.length()));
+                if (recent.length() > 2000) recent.delete(0, Math.min(1000, recent.length()));
                 recent.append(line).append('\n');
                 lastStartupError = recent.toString().trim();
             }
@@ -274,13 +318,14 @@ public class KuppaVoiceService {
     }
 
     @PreDestroy
-    public void stopManagedPiper() {
+    public synchronized void stopManagedPiper() {
         if (piperProcess != null && piperProcess.isAlive()) {
             piperProcess.destroy();
             try { piperProcess.waitFor(2, TimeUnit.SECONDS); }
             catch (InterruptedException e) { Thread.currentThread().interrupt(); }
             if (piperProcess.isAlive()) piperProcess.destroyForcibly();
         }
+        piperProcess = null;
     }
 
     private String rootMessage(Throwable e) {
