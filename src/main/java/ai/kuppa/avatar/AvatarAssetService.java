@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AvatarAssetService {
@@ -26,6 +28,7 @@ public class AvatarAssetService {
     private final Path avatarFile;
     private volatile String lastError;
     private volatile String activeSource;
+    private volatile String activeDownloader;
 
     public AvatarAssetService(
             @Value("${kuppa.avatar.source-url:https://models.readyplayer.me/KJIXZB.glb}") String sourceUrl,
@@ -60,9 +63,9 @@ public class AvatarAssetService {
                 Path temp = dataDir.resolve("kuppa-avatar.glb.part");
                 Files.deleteIfExists(temp);
                 try {
-                    downloadCandidate(candidate, temp);
+                    String downloader = downloadCandidate(candidate, temp);
                     if (!isValidGlb(temp)) {
-                        failures.add(candidate + " -> response was not a valid GLB");
+                        failures.add(candidate + " -> downloaded by " + downloader + " but response was not a valid GLB");
                         Files.deleteIfExists(temp);
                         continue;
                     }
@@ -72,12 +75,11 @@ public class AvatarAssetService {
                         Files.move(temp, avatarFile, StandardCopyOption.REPLACE_EXISTING);
                     }
                     activeSource = candidate.toString();
+                    activeDownloader = downloader;
                     lastError = null;
                     return avatarFile;
                 } catch (Exception e) {
-                    if (e instanceof InterruptedException) {
-                        Thread.currentThread().interrupt();
-                    }
+                    if (e instanceof InterruptedException) Thread.currentThread().interrupt();
                     Files.deleteIfExists(temp);
                     failures.add(candidate + " -> " + rootMessage(e));
                 }
@@ -90,7 +92,25 @@ public class AvatarAssetService {
         }
     }
 
-    private void downloadCandidate(URI candidate, Path temp) throws IOException, InterruptedException {
+    private String downloadCandidate(URI candidate, Path temp) throws Exception {
+        try {
+            downloadWithJava(candidate, temp);
+            return "java-http-client";
+        } catch (Exception javaError) {
+            Files.deleteIfExists(temp);
+            try {
+                downloadWithCurl(candidate, temp);
+                return "curl";
+            } catch (Exception curlError) {
+                throw new IllegalStateException(
+                        "Java download failed: " + rootMessage(javaError)
+                                + "; curl fallback failed: " + rootMessage(curlError),
+                        curlError);
+            }
+        }
+    }
+
+    private void downloadWithJava(URI candidate, Path temp) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder(candidate)
                 .timeout(Duration.ofSeconds(60))
                 .header("User-Agent", "KUPPA-AI/1.0")
@@ -100,6 +120,31 @@ public class AvatarAssetService {
         HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(temp));
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new IllegalStateException("HTTP " + response.statusCode());
+        }
+    }
+
+    private void downloadWithCurl(URI candidate, Path temp) throws Exception {
+        Process process = new ProcessBuilder(
+                "curl",
+                "-fL",
+                "--connect-timeout", "10",
+                "--max-time", "60",
+                "--retry", "2",
+                "-A", "KUPPA-AI/1.0",
+                "-H", "Accept: model/gltf-binary,application/octet-stream,*/*",
+                "-o", temp.toString(),
+                candidate.toString())
+                .redirectErrorStream(true)
+                .start();
+
+        boolean finished = process.waitFor(70, TimeUnit.SECONDS);
+        if (!finished) {
+            process.destroyForcibly();
+            throw new IllegalStateException("curl timed out");
+        }
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+        if (process.exitValue() != 0) {
+            throw new IllegalStateException("curl exit " + process.exitValue() + (output.isBlank() ? "" : ": " + output));
         }
     }
 
@@ -129,6 +174,7 @@ public class AvatarAssetService {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("configuredSource", configuredSourceUri.toString());
         out.put("activeSource", activeSource == null ? "" : activeSource);
+        out.put("downloader", activeDownloader == null ? "" : activeDownloader);
         out.put("localPath", avatarFile.toString());
         out.put("cached", isValidGlb(avatarFile));
         try { if (Files.exists(avatarFile)) out.put("sizeBytes", Files.size(avatarFile)); }
