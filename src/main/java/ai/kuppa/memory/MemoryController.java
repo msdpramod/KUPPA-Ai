@@ -20,7 +20,7 @@ public class MemoryController {
 
     @GetMapping
     public List<PersonaMemory> list() {
-        return repository.findByActiveTrueOrderByCreatedAtDesc();
+        return repository.findByActiveTrueOrderByUpdatedAtDesc();
     }
 
     @PostMapping
