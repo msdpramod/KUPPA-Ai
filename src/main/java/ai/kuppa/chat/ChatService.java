@@ -29,7 +29,7 @@ public class ChatService {
     @Transactional
     public ChatResponse chat(String message) {
         chatRepository.save(new ChatMessage("USER", message));
-        Plan plan = planner.plan(message, memoryRepository.findByActiveTrueOrderByCreatedAtDesc());
+        Plan plan = planner.plan(message, memoryRepository.findByActiveTrueOrderByUpdatedAtDesc());
         ProposedAction action = null;
         if (plan.hasAction()) {
             action = actionRepository.save(new ProposedAction(plan.actionType(), plan.actionSummary(), plan.actionPayload(), plan.reason(), plan.riskLevel()));
