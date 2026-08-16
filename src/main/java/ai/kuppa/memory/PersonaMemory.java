@@ -14,6 +14,7 @@ public class PersonaMemory {
     @Column private String source;
     @Column private Boolean reviewed;
     @Column(nullable = false) private Instant createdAt = Instant.now();
+    @Column(nullable = false) private Instant updatedAt = Instant.now();
 
     protected PersonaMemory() {}
 
@@ -29,11 +30,24 @@ public class PersonaMemory {
         this.reviewed = reviewed == null ? Boolean.FALSE : reviewed;
     }
 
+    @PrePersist
+    void onCreate() {
+        Instant now = Instant.now();
+        if (createdAt == null) createdAt = now;
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = Instant.now();
+    }
+
     public String getId() { return id; }
     public String getCategory() { return category; }
     public String getContent() { return content; }
     public boolean isActive() { return active; }
     public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt == null ? createdAt : updatedAt; }
     public double getConfidence() { return confidence == null ? 1.0 : confidence; }
     public String getSource() { return source == null || source.isBlank() ? "LEGACY" : source; }
     public boolean isReviewed() { return reviewed == null || reviewed; }
