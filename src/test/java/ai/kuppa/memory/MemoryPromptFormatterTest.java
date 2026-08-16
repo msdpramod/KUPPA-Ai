@@ -2,6 +2,8 @@ package ai.kuppa.memory;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,5 +34,26 @@ class MemoryPromptFormatterTest {
 
         assertThat(prompt).contains("CONFIRMED OR HIGH-CONFIDENCE MEMORY");
         assertThat(prompt).doesNotContain("TENTATIVE MEMORY");
+    }
+
+    @Test
+    void ordersMemoryByFreshestUpdateEvenWhenCallerPassesOldestFirst() throws Exception {
+        PersonaMemory older = new PersonaMemory("preference", "Prefers verbose answers", 1.0, "OWNER_EXPLICIT", true);
+        PersonaMemory newer = new PersonaMemory("preference", "Prefers concise answers", 1.0, "OWNER_EXPLICIT", true);
+        setUpdatedAt(older, Instant.parse("2026-08-15T08:00:00Z"));
+        setUpdatedAt(newer, Instant.parse("2026-08-16T08:00:00Z"));
+
+        String prompt = formatter.format(List.of(older, newer));
+
+        assertThat(prompt.indexOf("Prefers concise answers"))
+                .isLessThan(prompt.indexOf("Prefers verbose answers"));
+        assertThat(prompt).contains("MEMORY FRESHNESS RULE");
+        assertThat(prompt).contains("updatedAt=2026-08-16T08:00:00Z");
+    }
+
+    private static void setUpdatedAt(PersonaMemory memory, Instant value) throws Exception {
+        Field field = PersonaMemory.class.getDeclaredField("updatedAt");
+        field.setAccessible(true);
+        field.set(memory, value);
     }
 }
