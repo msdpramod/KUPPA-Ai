@@ -1,5 +1,6 @@
 package ai.kuppa.memory;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -41,6 +42,23 @@ public class MemoryController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Transactional
+    @PostMapping("/{id}/correct")
+    public ResponseEntity<PersonaMemory> correct(@PathVariable String id, @Valid @RequestBody CorrectMemoryRequest request) {
+        return repository.findById(id)
+                .map(existing -> {
+                    String category = request.category() == null || request.category().isBlank()
+                            ? existing.getCategory()
+                            : request.category().trim();
+                    PersonaMemory replacement = repository.save(
+                            new PersonaMemory(category, request.content(), 1.0, "OWNER_CORRECTION", true));
+                    existing.supersede(replacement.getId());
+                    repository.save(existing);
+                    return ResponseEntity.ok(replacement);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     public record AddMemoryRequest(
             @NotBlank String category,
             @NotBlank String content,
@@ -49,4 +67,8 @@ public class MemoryController {
             Boolean reviewed) {}
 
     public record ReviewMemoryRequest(boolean approved) {}
+
+    public record CorrectMemoryRequest(
+            String category,
+            @NotBlank String content) {}
 }
