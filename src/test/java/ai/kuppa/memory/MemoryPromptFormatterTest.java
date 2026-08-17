@@ -19,20 +19,33 @@ class MemoryPromptFormatterTest {
 
         String prompt = formatter.format(List.of(explicit, inferred));
 
-        assertThat(prompt).contains("CONFIRMED OR HIGH-CONFIDENCE MEMORY");
+        assertThat(prompt).contains("CONFIRMED MEMORY");
         assertThat(prompt).contains("Prefers concise answers");
         assertThat(prompt).contains("TENTATIVE MEMORY");
         assertThat(prompt).contains("May be frustrated by repeated setup failures");
-        assertThat(prompt).contains("never as a fact");
+        assertThat(prompt).contains("never state these as facts");
     }
 
     @Test
-    void highConfidenceInferenceCanBeUsedWithoutBeingMarkedTentative() {
+    void highConfidenceInferenceRemainsTentativeUntilOwnerReviewsIt() {
         PersonaMemory inferred = new PersonaMemory("routine", "Usually works on KUPPA in the evening", 0.90, "INFERRED_FROM_PATTERN", false);
 
         String prompt = formatter.format(List.of(inferred));
 
-        assertThat(prompt).contains("CONFIRMED OR HIGH-CONFIDENCE MEMORY");
+        assertThat(prompt).contains("TENTATIVE MEMORY");
+        assertThat(prompt).contains("confidence=0.90");
+        assertThat(prompt).doesNotContain("CONFIRMED MEMORY");
+        assertThat(prompt).contains("confidence may rank hypotheses but never turns an unreviewed inference into a fact");
+    }
+
+    @Test
+    void reviewedInferenceCanBecomeConfirmedPersonaContext() {
+        PersonaMemory reviewedInference = new PersonaMemory("routine", "Usually works on KUPPA in the evening", 0.90, "INFERRED_FROM_PATTERN", true);
+
+        String prompt = formatter.format(List.of(reviewedInference));
+
+        assertThat(prompt).contains("CONFIRMED MEMORY");
+        assertThat(prompt).contains("Usually works on KUPPA in the evening");
         assertThat(prompt).doesNotContain("TENTATIVE MEMORY");
     }
 
