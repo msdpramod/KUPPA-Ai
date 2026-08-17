@@ -25,20 +25,25 @@ public class MemoryPromptFormatter {
                             + " [source=" + item.getSource()
                             + ", confidence=" + String.format("%.2f", item.getConfidence())
                             + ", updatedAt=" + updatedAtSafe(item) + "]\n";
-                    if (item.isReviewed() || item.getConfidence() >= 0.80) confirmed.append(line);
+                    if (isConfirmed(item)) confirmed.append(line);
                     else tentative.append(line);
                 });
 
         StringBuilder out = new StringBuilder();
-        out.append("MEMORY FRESHNESS RULE: entries are ordered newest-first by updatedAt. If two memories conflict, prefer the newer reviewed or higher-confidence memory and do not present both as simultaneously certain.\n");
+        out.append("MEMORY FRESHNESS RULE: entries are ordered newest-first by updatedAt. If two memories conflict, prefer the newer reviewed memory; confidence may rank hypotheses but never turns an unreviewed inference into a fact.\n");
         if (!confirmed.isEmpty()) {
-            out.append("CONFIRMED OR HIGH-CONFIDENCE MEMORY:\n").append(confirmed);
+            out.append("CONFIRMED MEMORY — owner-provided/reviewed information that may be used as factual persona context:\n")
+                    .append(confirmed);
         }
         if (!tentative.isEmpty()) {
-            out.append("TENTATIVE MEMORY — treat as a hypothesis, never as a fact; avoid stating it back as certain unless the user confirms it:\n")
+            out.append("TENTATIVE MEMORY — inferred and not yet owner-reviewed. Treat confidence only as hypothesis strength; never state these as facts or make external decisions from them without confirmation:\n")
                     .append(tentative);
         }
         return out.toString().trim();
+    }
+
+    private boolean isConfirmed(PersonaMemory memory) {
+        return memory.isReviewed();
     }
 
     private Instant updatedAtSafe(PersonaMemory memory) {
