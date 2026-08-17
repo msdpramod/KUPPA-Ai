@@ -13,6 +13,7 @@ public class PersonaMemory {
     @Column private Double confidence;
     @Column private String source;
     @Column private Boolean reviewed;
+    @Column private String supersededById;
     @Column(nullable = false) private Instant createdAt = Instant.now();
     @Column(nullable = false) private Instant updatedAt = Instant.now();
 
@@ -51,10 +52,20 @@ public class PersonaMemory {
     public double getConfidence() { return confidence == null ? 1.0 : confidence; }
     public String getSource() { return source == null || source.isBlank() ? "LEGACY" : source; }
     public boolean isReviewed() { return reviewed == null || reviewed; }
+    public String getSupersededById() { return supersededById; }
 
     public void review(boolean approved) {
         this.reviewed = true;
         this.active = approved;
+    }
+
+    public void supersede(String replacementId) {
+        if (replacementId == null || replacementId.isBlank()) {
+            throw new IllegalArgumentException("replacementId is required");
+        }
+        this.active = false;
+        this.reviewed = true;
+        this.supersededById = replacementId;
     }
 
     private static double sanitizeConfidence(Double value) {
