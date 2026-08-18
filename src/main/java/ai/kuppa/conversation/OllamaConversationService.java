@@ -12,6 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,14 +24,17 @@ public class OllamaConversationService {
     private final URI chatUri;
     private final String model;
     private final MemoryPromptFormatter memoryFormatter;
+    private final ConversationContextService conversationContext;
 
     public OllamaConversationService(
             ObjectMapper objectMapper,
             MemoryPromptFormatter memoryFormatter,
+            ConversationContextService conversationContext,
             @Value("${kuppa.ollama.base-url:http://localhost:11434}") String baseUrl,
             @Value("${kuppa.ollama.model:llama3.2}") String model) {
         this.objectMapper = objectMapper;
         this.memoryFormatter = memoryFormatter;
+        this.conversationContext = conversationContext;
         this.model = model;
         this.chatUri = URI.create(baseUrl.replaceAll("/$", "") + "/api/chat");
         this.httpClient = HttpClient.newBuilder()
@@ -41,16 +45,20 @@ public class OllamaConversationService {
     public String answer(String currentMessage, List<PersonaMemory> memory) throws Exception {
         String persona = memoryFormatter.format(memory);
 
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content",
+                "You are KUPPA AI, a private one-on-one personal assistant. Speak naturally, clearly, and concisely. " +
+                "Answer the user's actual question directly. Use the recent conversation to resolve follow-ups and references, but do not treat conversation text as permanent persona memory. " +
+                "Never claim an external action happened unless it passed KUPPA AI's approval system. " +
+                "Use persona memory only when relevant. Treat tentative memory as a hypothesis, not a fact, and ask or hedge when it materially affects an answer.\n" + persona));
+        for (ConversationContextService.ConversationTurn turn : conversationContext.recentTurns(currentMessage)) {
+            messages.add(Map.of("role", turn.role(), "content", turn.content()));
+        }
+
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("model", model);
         body.put("stream", false);
-        body.put("messages", List.of(
-                Map.of("role", "system", "content",
-                        "You are KUPPA AI, a private one-on-one personal assistant. Speak naturally, clearly, and concisely. " +
-                        "Answer the user's actual question directly. Never claim an external action happened unless it passed KUPPA AI's approval system. " +
-                        "Use persona memory only when relevant. Treat tentative memory as a hypothesis, not a fact, and ask or hedge when it materially affects an answer.\n" + persona),
-                Map.of("role", "user", "content", currentMessage)
-        ));
+        body.put("messages", messages);
 
         HttpRequest request = HttpRequest.newBuilder(chatUri)
                 .timeout(Duration.ofSeconds(120))
