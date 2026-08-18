@@ -1,7 +1,5 @@
 package ai.kuppa.conversation;
 
-import ai.kuppa.chat.ChatMessage;
-import ai.kuppa.chat.ChatMessageRepository;
 import ai.kuppa.memory.MemoryPromptFormatter;
 import ai.kuppa.memory.PersonaMemory;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,8 +12,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +20,7 @@ import java.util.Map;
 public class OpenAiConversationService {
     private static final URI RESPONSES_URI = URI.create("https://api.openai.com/v1/responses");
 
-    private final ChatMessageRepository chatRepository;
+    private final ConversationContextService conversationContext;
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
     private final String apiKey;
@@ -32,12 +28,12 @@ public class OpenAiConversationService {
     private final MemoryPromptFormatter memoryFormatter;
 
     public OpenAiConversationService(
-            ChatMessageRepository chatRepository,
+            ConversationContextService conversationContext,
             ObjectMapper objectMapper,
             MemoryPromptFormatter memoryFormatter,
             @Value("${kuppa.openai.api-key:}") String configuredApiKey,
             @Value("${kuppa.openai.model:gpt-5-mini}") String model) {
-        this.chatRepository = chatRepository;
+        this.conversationContext = conversationContext;
         this.objectMapper = objectMapper;
         this.memoryFormatter = memoryFormatter;
         this.apiKey = resolveApiKey(configuredApiKey);
@@ -86,20 +82,19 @@ public class OpenAiConversationService {
 
     private String buildInstructions(List<PersonaMemory> memory) {
         return "You are KUPPA AI, a private one-on-one personal assistant. Speak naturally and concisely, like a real conversation. " +
-                "Answer the user's actual question directly. Do not claim an external action happened. External actions must always go through KUPPA AI's approval system. " +
+                "Answer the user's actual question directly. Use recent conversation only to resolve current context; do not treat it as permanent persona memory. " +
+                "Do not claim an external action happened. External actions must always go through KUPPA AI's approval system. " +
                 "Use persona memory only when relevant. Treat tentative memory as a hypothesis rather than a fact and ask or hedge when it materially affects an answer.\n" +
                 memoryFormatter.format(memory);
     }
 
     private String buildConversationText(String currentMessage) {
-        List<ChatMessage> recent = new ArrayList<>(chatRepository.findTop50ByOrderByCreatedAtDesc());
-        if (recent.size() > 12) recent = new ArrayList<>(recent.subList(0, 12));
-        Collections.reverse(recent);
         StringBuilder transcript = new StringBuilder();
-        for (ChatMessage item : recent) {
-            transcript.append("USER".equals(item.getRole()) ? "User: " : "KUPPA AI: ").append(item.getContent()).append('\n');
+        for (ConversationContextService.ConversationTurn turn : conversationContext.recentTurns(currentMessage)) {
+            transcript.append("user".equals(turn.role()) ? "User: " : "KUPPA AI: ")
+                    .append(turn.content())
+                    .append('\n');
         }
-        if (transcript.isEmpty() || !transcript.toString().contains(currentMessage)) transcript.append("User: ").append(currentMessage).append('\n');
         transcript.append("KUPPA AI:");
         return transcript.toString();
     }
