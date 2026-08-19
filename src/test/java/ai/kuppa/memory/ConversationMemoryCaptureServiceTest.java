@@ -66,4 +66,45 @@ class ConversationMemoryCaptureServiceTest {
         assertEquals("I want Indian English voice responses", memory.getContent());
         assertTrue(memory.isReviewed());
     }
+
+    @Test
+    void capturesExplicitRoutineAsReviewedMemory() {
+        PersonaMemoryRepository repository = mock(PersonaMemoryRepository.class);
+        when(repository.findByActiveTrueOrderByUpdatedAtDesc()).thenReturn(List.of());
+        when(repository.save(any(PersonaMemory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConversationMemoryCaptureService service = new ConversationMemoryCaptureService(repository);
+        PersonaMemory memory = service.capture("Every morning I go to the gym before work").orElseThrow();
+
+        assertEquals("ROUTINE", memory.getCategory());
+        assertEquals("OWNER_EXPLICIT", memory.getSource());
+        assertTrue(memory.isReviewed());
+        assertEquals(1.0, memory.getConfidence());
+    }
+
+    @Test
+    void capturesEmotionalSelfReportAsTentativeMemory() {
+        PersonaMemoryRepository repository = mock(PersonaMemoryRepository.class);
+        when(repository.findByActiveTrueOrderByUpdatedAtDesc()).thenReturn(List.of());
+        when(repository.save(any(PersonaMemory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConversationMemoryCaptureService service = new ConversationMemoryCaptureService(repository);
+        PersonaMemory memory = service.capture("I'm feeling stressed about tomorrow's interview").orElseThrow();
+
+        assertEquals("EMOTIONAL_SIGNAL", memory.getCategory());
+        assertEquals("OWNER_SELF_REPORT", memory.getSource());
+        assertFalse(memory.isReviewed());
+        assertEquals(0.65, memory.getConfidence());
+    }
+
+    @Test
+    void doesNotTreatNeutralSelfDescriptionAsEmotion() {
+        PersonaMemoryRepository repository = mock(PersonaMemoryRepository.class);
+        when(repository.findByActiveTrueOrderByUpdatedAtDesc()).thenReturn(List.of());
+
+        ConversationMemoryCaptureService service = new ConversationMemoryCaptureService(repository);
+
+        assertTrue(service.capture("I am a backend engineer").isEmpty());
+        verify(repository, never()).save(any(PersonaMemory.class));
+    }
 }
