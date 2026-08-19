@@ -2,6 +2,7 @@ package ai.kuppa.memory;
 
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -10,14 +11,17 @@ import java.util.List;
 public class MemoryPromptFormatter {
 
     private static final int MAX_MEMORY_ITEMS = 30;
+    private static final Duration EMOTIONAL_SIGNAL_TTL = Duration.ofHours(24);
 
     public String format(List<PersonaMemory> memory) {
         if (memory == null || memory.isEmpty()) return "No persona memory yet.";
 
+        Instant now = Instant.now();
         StringBuilder confirmed = new StringBuilder();
         StringBuilder tentative = new StringBuilder();
 
         memory.stream()
+                .filter(item -> isFreshEnough(item, now))
                 .sorted(Comparator.comparing(this::updatedAtSafe).reversed())
                 .limit(MAX_MEMORY_ITEMS)
                 .forEach(item -> {
@@ -29,8 +33,10 @@ public class MemoryPromptFormatter {
                     else tentative.append(line);
                 });
 
+        if (confirmed.isEmpty() && tentative.isEmpty()) return "No current persona memory yet.";
+
         StringBuilder out = new StringBuilder();
-        out.append("MEMORY FRESHNESS RULE: entries are ordered newest-first by updatedAt. If two memories conflict, prefer the newer reviewed memory; confidence may rank hypotheses but never turns an unreviewed inference into a fact.\n");
+        out.append("MEMORY FRESHNESS RULE: entries are ordered newest-first by updatedAt. If two memories conflict, prefer the newer reviewed memory; confidence may rank hypotheses but never turns an unreviewed inference into a fact. Emotional signals are short-lived context and expire from prompts after 24 hours.\n");
         if (!confirmed.isEmpty()) {
             out.append("CONFIRMED MEMORY — owner-provided/reviewed information that may be used as factual persona context:\n")
                     .append(confirmed);
@@ -44,6 +50,13 @@ public class MemoryPromptFormatter {
 
     private boolean isConfirmed(PersonaMemory memory) {
         return memory.isReviewed();
+    }
+
+    private boolean isFreshEnough(PersonaMemory memory, Instant now) {
+        if (!"EMOTIONAL_SIGNAL".equalsIgnoreCase(memory.getCategory())) return true;
+        Instant updatedAt = updatedAtSafe(memory);
+        return !updatedAt.equals(Instant.EPOCH)
+                && !updatedAt.isBefore(now.minus(EMOTIONAL_SIGNAL_TTL));
     }
 
     private Instant updatedAtSafe(PersonaMemory memory) {
