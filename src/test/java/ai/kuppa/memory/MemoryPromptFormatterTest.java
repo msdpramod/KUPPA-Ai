@@ -64,6 +64,29 @@ class MemoryPromptFormatterTest {
         assertThat(prompt).contains("updatedAt=2026-08-16T08:00:00Z");
     }
 
+    @Test
+    void expiresEmotionalSignalsAfterTwentyFourHours() throws Exception {
+        PersonaMemory stale = new PersonaMemory("EMOTIONAL_SIGNAL", "I'm stressed about an interview", 0.65, "OWNER_SELF_REPORT", false);
+        setUpdatedAt(stale, Instant.now().minusSeconds(25 * 60 * 60));
+
+        String prompt = formatter.format(List.of(stale));
+
+        assertThat(prompt).doesNotContain("I'm stressed about an interview");
+        assertThat(prompt).isEqualTo("No current persona memory yet.");
+    }
+
+    @Test
+    void keepsRecentEmotionalSignalTentative() throws Exception {
+        PersonaMemory recent = new PersonaMemory("EMOTIONAL_SIGNAL", "I'm excited about the new role", 0.65, "OWNER_SELF_REPORT", false);
+        setUpdatedAt(recent, Instant.now().minusSeconds(60 * 60));
+
+        String prompt = formatter.format(List.of(recent));
+
+        assertThat(prompt).contains("TENTATIVE MEMORY");
+        assertThat(prompt).contains("I'm excited about the new role");
+        assertThat(prompt).contains("Emotional signals are short-lived context and expire from prompts after 24 hours");
+    }
+
     private static void setUpdatedAt(PersonaMemory memory, Instant value) throws Exception {
         Field field = PersonaMemory.class.getDeclaredField("updatedAt");
         field.setAccessible(true);
