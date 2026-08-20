@@ -50,6 +50,10 @@ public class ConversationMemoryCaptureService {
         if (remembered == null) remembered = afterPrefix(raw, lower, "please remember that ");
         if (remembered != null) return confirmed("FACT", remembered);
 
+        if (isExplicitCommunicationStyle(lower)) {
+            return confirmed("COMMUNICATION_STYLE", raw);
+        }
+
         if (lower.startsWith("i prefer ") || lower.startsWith("i don't like ")
                 || lower.startsWith("i do not like ") || lower.startsWith("my preference is ")) {
             return confirmed("PREFERENCE", raw);
@@ -76,6 +80,21 @@ public class ConversationMemoryCaptureService {
 
     private Candidate confirmed(String category, String content) {
         return new Candidate(category, content, 1.0, OWNER_EXPLICIT, true);
+    }
+
+    private boolean isExplicitCommunicationStyle(String lower) {
+        return lower.startsWith("always answer ")
+                || lower.startsWith("always respond ")
+                || lower.startsWith("always reply ")
+                || lower.startsWith("please always answer ")
+                || lower.startsWith("please always respond ")
+                || lower.startsWith("please always reply ")
+                || lower.startsWith("i prefer your answers ")
+                || lower.startsWith("i prefer your responses ")
+                || lower.startsWith("i prefer your replies ")
+                || lower.startsWith("when you answer, ")
+                || lower.startsWith("when you respond, ")
+                || lower.startsWith("when you reply, ");
     }
 
     private boolean isExplicitRoutine(String lower) {
