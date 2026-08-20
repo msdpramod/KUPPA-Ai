@@ -1,6 +1,7 @@
 package ai.kuppa.memory;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
@@ -10,6 +11,7 @@ import java.util.Optional;
 public class ConversationMemoryCaptureService {
     private static final String OWNER_EXPLICIT = "OWNER_EXPLICIT";
     private static final String OWNER_SELF_REPORT = "OWNER_SELF_REPORT";
+    private static final String EMOTIONAL_SIGNAL = "EMOTIONAL_SIGNAL";
     private static final double TENTATIVE_EMOTION_CONFIDENCE = 0.65;
 
     private static final List<String> EMOTIONAL_SIGNALS = List.of(
@@ -24,6 +26,7 @@ public class ConversationMemoryCaptureService {
         this.repository = repository;
     }
 
+    @Transactional
     public Optional<PersonaMemory> capture(String message) {
         if (message == null || message.isBlank()) return Optional.empty();
 
@@ -36,6 +39,14 @@ public class ConversationMemoryCaptureService {
                 existing.getCategory().equalsIgnoreCase(candidate.category())
                         && existing.getContent().equalsIgnoreCase(candidate.content()));
         if (duplicate) return Optional.empty();
+
+        // Emotional state is transient. Keep only the newest self-report active so Ollama
+        // does not blend yesterday's stress with today's calm/excitement as simultaneous truth.
+        if (EMOTIONAL_SIGNAL.equals(candidate.category())) {
+            active.stream()
+                    .filter(existing -> EMOTIONAL_SIGNAL.equalsIgnoreCase(existing.getCategory()))
+                    .forEach(existing -> existing.review(false));
+        }
 
         PersonaMemory saved = repository.save(new PersonaMemory(
                 candidate.category(), candidate.content(), candidate.confidence(),
@@ -71,7 +82,7 @@ public class ConversationMemoryCaptureService {
         }
 
         if (isEmotionalSelfReport(lower)) {
-            return new Candidate("EMOTIONAL_SIGNAL", raw, TENTATIVE_EMOTION_CONFIDENCE,
+            return new Candidate(EMOTIONAL_SIGNAL, raw, TENTATIVE_EMOTION_CONFIDENCE,
                     OWNER_SELF_REPORT, false);
         }
 
