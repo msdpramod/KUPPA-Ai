@@ -28,6 +28,33 @@ class ConversationMemoryCaptureServiceTest {
     }
 
     @Test
+    void capturesPersistentCommunicationStyleAsReviewedOwnerMemory() {
+        PersonaMemoryRepository repository = mock(PersonaMemoryRepository.class);
+        when(repository.findByActiveTrueOrderByUpdatedAtDesc()).thenReturn(List.of());
+        when(repository.save(any(PersonaMemory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConversationMemoryCaptureService service = new ConversationMemoryCaptureService(repository);
+        PersonaMemory memory = service.capture("Please always answer with concise step-by-step explanations").orElseThrow();
+
+        assertEquals("COMMUNICATION_STYLE", memory.getCategory());
+        assertEquals("Please always answer with concise step-by-step explanations", memory.getContent());
+        assertEquals("OWNER_EXPLICIT", memory.getSource());
+        assertTrue(memory.isReviewed());
+        assertEquals(1.0, memory.getConfidence());
+    }
+
+    @Test
+    void doesNotCaptureOneOffAnswerRequestAsPermanentStyle() {
+        PersonaMemoryRepository repository = mock(PersonaMemoryRepository.class);
+        when(repository.findByActiveTrueOrderByUpdatedAtDesc()).thenReturn(List.of());
+
+        ConversationMemoryCaptureService service = new ConversationMemoryCaptureService(repository);
+
+        assertTrue(service.capture("Answer this question in two sentences").isEmpty());
+        verify(repository, never()).save(any(PersonaMemory.class));
+    }
+
+    @Test
     void capturesRememberCommandWithoutCommandWords() {
         PersonaMemoryRepository repository = mock(PersonaMemoryRepository.class);
         when(repository.findByActiveTrueOrderByUpdatedAtDesc()).thenReturn(List.of());
