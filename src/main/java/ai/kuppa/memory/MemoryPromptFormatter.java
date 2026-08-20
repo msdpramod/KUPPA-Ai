@@ -17,6 +17,7 @@ public class MemoryPromptFormatter {
         if (memory == null || memory.isEmpty()) return "No persona memory yet.";
 
         Instant now = Instant.now();
+        StringBuilder style = new StringBuilder();
         StringBuilder confirmed = new StringBuilder();
         StringBuilder tentative = new StringBuilder();
 
@@ -29,14 +30,21 @@ public class MemoryPromptFormatter {
                             + " [source=" + item.getSource()
                             + ", confidence=" + String.format("%.2f", item.getConfidence())
                             + ", updatedAt=" + updatedAtSafe(item) + "]\n";
-                    if (isConfirmed(item)) confirmed.append(line);
+                    if (isConfirmedCommunicationStyle(item)) style.append(line);
+                    else if (isConfirmed(item)) confirmed.append(line);
                     else tentative.append(line);
                 });
 
-        if (confirmed.isEmpty() && tentative.isEmpty()) return "No current persona memory yet.";
+        if (style.isEmpty() && confirmed.isEmpty() && tentative.isEmpty()) {
+            return "No current persona memory yet.";
+        }
 
         StringBuilder out = new StringBuilder();
         out.append("MEMORY FRESHNESS RULE: entries are ordered newest-first by updatedAt. If two memories conflict, prefer the newer reviewed memory; confidence may rank hypotheses but never turns an unreviewed inference into a fact. Emotional signals are short-lived context and expire from prompts after 24 hours.\n");
+        if (!style.isEmpty()) {
+            out.append("OWNER COMMUNICATION STYLE — explicit reviewed instructions for how KUPPA should communicate. Follow these on every response unless the owner gives a newer conflicting instruction:\n")
+                    .append(style);
+        }
         if (!confirmed.isEmpty()) {
             out.append("CONFIRMED MEMORY — owner-provided/reviewed information that may be used as factual persona context:\n")
                     .append(confirmed);
@@ -50,6 +58,11 @@ public class MemoryPromptFormatter {
 
     private boolean isConfirmed(PersonaMemory memory) {
         return memory.isReviewed();
+    }
+
+    private boolean isConfirmedCommunicationStyle(PersonaMemory memory) {
+        return memory.isReviewed()
+                && "COMMUNICATION_STYLE".equalsIgnoreCase(memory.getCategory());
     }
 
     private boolean isFreshEnough(PersonaMemory memory, Instant now) {
