@@ -27,6 +27,29 @@ class MemoryPromptFormatterTest {
     }
 
     @Test
+    void givesReviewedCommunicationStyleItsOwnHighPrioritySection() {
+        PersonaMemory style = new PersonaMemory(
+                "COMMUNICATION_STYLE",
+                "Please always answer with concise step-by-step explanations",
+                1.0,
+                "OWNER_EXPLICIT",
+                true);
+        PersonaMemory preference = new PersonaMemory(
+                "PREFERENCE",
+                "Prefers Java examples",
+                1.0,
+                "OWNER_EXPLICIT",
+                true);
+
+        String prompt = formatter.format(List.of(preference, style));
+
+        assertThat(prompt).contains("OWNER COMMUNICATION STYLE");
+        assertThat(prompt).contains("Follow these on every response unless the owner gives a newer conflicting instruction");
+        assertThat(prompt.indexOf("Please always answer with concise step-by-step explanations"))
+                .isLessThan(prompt.indexOf("Prefers Java examples"));
+    }
+
+    @Test
     void highConfidenceInferenceRemainsTentativeUntilOwnerReviewsIt() {
         PersonaMemory inferred = new PersonaMemory("routine", "Usually works on KUPPA in the evening", 0.90, "INFERRED_FROM_PATTERN", false);
 
