@@ -125,6 +125,27 @@ class ConversationMemoryCaptureServiceTest {
     }
 
     @Test
+    void replacesOlderEmotionalSignalWithNewestSelfReport() {
+        PersonaMemoryRepository repository = mock(PersonaMemoryRepository.class);
+        PersonaMemory oldEmotion = new PersonaMemory(
+                "EMOTIONAL_SIGNAL", "I'm feeling stressed about the interview", 0.65,
+                "OWNER_SELF_REPORT", false);
+        PersonaMemory durablePreference = new PersonaMemory("PREFERENCE", "I prefer concise answers");
+        when(repository.findByActiveTrueOrderByUpdatedAtDesc())
+                .thenReturn(List.of(oldEmotion, durablePreference));
+        when(repository.save(any(PersonaMemory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConversationMemoryCaptureService service = new ConversationMemoryCaptureService(repository);
+        PersonaMemory current = service.capture("I'm feeling calm now").orElseThrow();
+
+        assertEquals("EMOTIONAL_SIGNAL", current.getCategory());
+        assertFalse(oldEmotion.isActive());
+        assertTrue(oldEmotion.isReviewed());
+        assertTrue(durablePreference.isActive());
+        verify(repository).save(any(PersonaMemory.class));
+    }
+
+    @Test
     void doesNotTreatNeutralSelfDescriptionAsEmotion() {
         PersonaMemoryRepository repository = mock(PersonaMemoryRepository.class);
         when(repository.findByActiveTrueOrderByUpdatedAtDesc()).thenReturn(List.of());
