@@ -3,6 +3,7 @@ package ai.kuppa.chat;
 import ai.kuppa.action.ProposedAction;
 import ai.kuppa.action.ProposedActionRepository;
 import ai.kuppa.audit.AuditService;
+import ai.kuppa.memory.ConversationMemoryCaptureService;
 import ai.kuppa.memory.PersonaMemoryRepository;
 import ai.kuppa.planner.Plan;
 import ai.kuppa.planner.Planner;
@@ -16,20 +17,28 @@ public class ChatService {
     private final ProposedActionRepository actionRepository;
     private final Planner planner;
     private final AuditService audit;
+    private final ConversationMemoryCaptureService memoryCapture;
 
     public ChatService(ChatMessageRepository chatRepository, PersonaMemoryRepository memoryRepository,
-                       ProposedActionRepository actionRepository, Planner planner, AuditService audit) {
+                       ProposedActionRepository actionRepository, Planner planner, AuditService audit,
+                       ConversationMemoryCaptureService memoryCapture) {
         this.chatRepository = chatRepository;
         this.memoryRepository = memoryRepository;
         this.actionRepository = actionRepository;
         this.planner = planner;
         this.audit = audit;
+        this.memoryCapture = memoryCapture;
     }
 
     @Transactional
     public ChatResponse chat(String message) {
         chatRepository.save(new ChatMessage("USER", message));
-        Plan plan = planner.plan(message, memoryRepository.findByActiveTrueOrderByCreatedAtDesc());
+
+        memoryCapture.capture(message).ifPresent(memory ->
+                audit.record("MEMORY_CAPTURED", memory.getId(),
+                        memory.getCategory() + ": " + memory.getContent()));
+
+        Plan plan = planner.plan(message, memoryRepository.findByActiveTrueOrderByUpdatedAtDesc());
         ProposedAction action = null;
         if (plan.hasAction()) {
             action = actionRepository.save(new ProposedAction(plan.actionType(), plan.actionSummary(), plan.actionPayload(), plan.reason(), plan.riskLevel()));

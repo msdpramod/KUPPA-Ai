@@ -19,3 +19,25 @@ management:
         include: health,info
 server:
   port: ${PORT:8080}
+kuppa:
+  ollama:
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    model: ${OLLAMA_MODEL:llama3.2}
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    model: ${OPENAI_MODEL:gpt-5-mini}
+    fallback-enabled: ${OPENAI_FALLBACK_ENABLED:false}
+  avatar:
+    source-url: ${KUPPA_AVATAR_SOURCE_URL:https://models.readyplayer.me/KJIXZB.glb?quality=high&morphTargets=ARKit,Oculus%20Visemes&textureSizeLimit=1024}
+    data-dir: ${KUPPA_AVATAR_DATA_DIR:${user.home}/.kuppa-ai/avatar}
+  voice:
+    enabled: ${KUPPA_VOICE_ENABLED:true}
+    auto-start: ${KUPPA_VOICE_AUTO_START:true}
+    base-url: ${KUPPA_VOICE_BASE_URL:http://localhost:5500}
+    port: ${KUPPA_VOICE_PORT:5500}
+    python-command: ${KUPPA_VOICE_PYTHON:python3}
+    data-dir: ${KUPPA_VOICE_DATA_DIR:${user.home}/.kuppa-ai/voices}
+    voice: ${KUPPA_VOICE_MODEL:en_US-amy-medium}
+    length-scale: ${KUPPA_VOICE_LENGTH_SCALE:1.04}
+    noise-scale: ${KUPPA_VOICE_NOISE_SCALE:0.55}
+    noise-w-scale: ${KUPPA_VOICE_NOISE_W_SCALE:0.72}
