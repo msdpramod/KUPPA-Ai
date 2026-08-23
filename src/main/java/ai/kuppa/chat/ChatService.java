@@ -3,6 +3,7 @@ package ai.kuppa.chat;
 import ai.kuppa.action.ProposedAction;
 import ai.kuppa.action.ProposedActionRepository;
 import ai.kuppa.audit.AuditService;
+import ai.kuppa.conversation.VayuBrainGateway;
 import ai.kuppa.memory.ConversationMemoryCaptureService;
 import ai.kuppa.memory.PersonaMemoryRepository;
 import ai.kuppa.planner.Plan;
@@ -44,9 +45,18 @@ public class ChatService {
             action = actionRepository.save(new ProposedAction(plan.actionType(), plan.actionSummary(), plan.actionPayload(), plan.reason(), plan.riskLevel()));
             audit.record("ACTION_PROPOSED", action.getId(), action.getSummary());
         }
+        if (plan.brain() != null) {
+            VayuBrainGateway.Response brain = plan.brain();
+            audit.record("VAYU_HANDOFF", brain.correlationId(),
+                    "contract=" + brain.contractVersion()
+                            + ", provider=" + brain.provider()
+                            + ", degraded=" + brain.degraded()
+                            + ", latencyMs=" + brain.latencyMs()
+                            + (brain.errorCode() == null ? "" : ", errorCode=" + brain.errorCode()));
+        }
         chatRepository.save(new ChatMessage("KUPPA_AI", plan.response()));
-        return new ChatResponse(plan.response(), action);
+        return new ChatResponse(plan.response(), action, plan.brain());
     }
 
-    public record ChatResponse(String message, ProposedAction proposedAction) {}
+    public record ChatResponse(String message, ProposedAction proposedAction, VayuBrainGateway.Response brain) {}
 }

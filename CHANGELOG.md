@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-24
+### Changed
+- Added versioned `VayuBrainGateway v1` as the explicit KUPPA HEART -> Vayu BRAIN cognition boundary.
+- Added per-request brain correlation IDs, provider/degraded metadata, and latency measurement.
+- Added `VAYU_HANDOFF` audit events and optional brain metadata to `/api/chat` responses.
+- Added explicit graceful degradation when Ollama/OpenAI brain providers are unavailable without leaking raw provider exception details.
+
+### Safety
+- Consequential external/high-impact action approval flow is unchanged and still short-circuits before brain execution.
+- No secrets, new network destinations, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
+
 ## 2026-08-22
 ### Changed
 - Added a nine-state KUPPA interaction engine: `IDLE -> NOTICED_USER -> LISTENING -> UNDERSTANDING -> ASKING_VAYU -> THINKING -> RESPONDING -> SPEAKING -> WAITING`.

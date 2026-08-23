@@ -22,23 +22,35 @@ public class BrainRouterService {
     }
 
     public String answer(String message, List<PersonaMemory> memory) {
+        return answerDetailed(message, memory).message();
+    }
+
+    public BrainAnswer answerDetailed(String message, List<PersonaMemory> memory) {
         try {
             String local = ollama.answer(message, memory);
-            if (local != null && !local.isBlank()) return local;
+            if (local != null && !local.isBlank()) {
+                return new BrainAnswer(local, "OLLAMA", false, null);
+            }
             throw new IllegalStateException("Ollama returned an empty response");
         } catch (Exception ollamaError) {
             if (openAiFallbackEnabled) {
-                return openAi.answer(message, memory);
+                try {
+                    String fallback = openAi.answer(message, memory);
+                    if (fallback != null && !fallback.isBlank()) {
+                        return new BrainAnswer(fallback, "OPENAI_FALLBACK", true, "OLLAMA_UNAVAILABLE");
+                    }
+                } catch (Exception ignored) {
+                    // The gateway exposes a stable degraded state instead of leaking provider exception details.
+                }
             }
-            String reason = rootMessage(ollamaError);
-            return "My local Ollama brain is unavailable right now. Make sure Ollama is running and the configured model is installed. Details: " + reason;
+            return new BrainAnswer(
+                    "I’m here, but Vayu’s reasoning service is temporarily unavailable. I can still stay with the conversation, but I won’t pretend I completed brain-level reasoning. Please try again shortly.",
+                    "NONE",
+                    true,
+                    "VAYU_UNAVAILABLE"
+            );
         }
     }
 
-    private String rootMessage(Throwable error) {
-        Throwable current = error;
-        while (current.getCause() != null) current = current.getCause();
-        String message = current.getMessage();
-        return message == null || message.isBlank() ? current.getClass().getSimpleName() : message;
-    }
+    public record BrainAnswer(String message, String provider, boolean degraded, String errorCode) {}
 }

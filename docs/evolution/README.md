@@ -7,7 +7,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | Date / cycle | Record | Commit | Result |
 |---|---|---|---|
 | 2026-08-22 15:00 UI | `2026/08/2026-08-22-1500-governance-bootstrap.md` | `b7b937f8e87af8882619f850078f84173b2d3b85` | Governance log bootstrapped; runtime unchanged |
-| 2026-08-22 15:00 UI | `2026/08/2026-08-22-1515-reactive-state-engine.md` | This evolution commit | Nine-state interaction engine + barge-in |
+| 2026-08-22 15:15 UI | `2026/08/2026-08-22-1515-reactive-state-engine.md` | `5a8357eabed348534484d161d94c7d988c90244b` | Nine-state interaction engine + barge-in |
+| 2026-08-24 03:00 Heart | `2026/08/2026-08-24-0300-vayu-brain-gateway-v1.md` | This evolution commit | Versioned Vayu gateway + correlation/latency/degraded metadata |
 
 ## Required preflight for future runs
 1. Read `docs/KUPPA_CONSTITUTION.md`.

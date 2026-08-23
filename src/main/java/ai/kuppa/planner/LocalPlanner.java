@@ -1,7 +1,7 @@
 package ai.kuppa.planner;
 
 import ai.kuppa.action.RiskLevel;
-import ai.kuppa.conversation.BrainRouterService;
+import ai.kuppa.conversation.VayuBrainGateway;
 import ai.kuppa.memory.PersonaMemory;
 import org.springframework.stereotype.Component;
 
@@ -9,11 +9,11 @@ import java.util.List;
 
 @Component
 public class LocalPlanner implements Planner {
-    private final BrainRouterService brainRouter;
+    private final VayuBrainGateway brainGateway;
     private final ActionIntentDetector actionIntentDetector;
 
-    public LocalPlanner(BrainRouterService brainRouter, ActionIntentDetector actionIntentDetector) {
-        this.brainRouter = brainRouter;
+    public LocalPlanner(VayuBrainGateway brainGateway, ActionIntentDetector actionIntentDetector) {
+        this.brainGateway = brainGateway;
         this.actionIntentDetector = actionIntentDetector;
     }
 
@@ -43,9 +43,11 @@ public class LocalPlanner implements Planner {
             );
         }
 
+        VayuBrainGateway.Response brain = brainGateway.ask(message, memory);
         return new Plan(
-            brainRouter.answer(message, memory),
-            null, null, null, null, RiskLevel.LOW
+            brain.message(),
+            null, null, null, null, RiskLevel.LOW,
+            brain
         );
     }
 }
