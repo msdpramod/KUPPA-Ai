@@ -1,28 +1,31 @@
 # KUPPA Known-Good Baseline
 
 ## Runtime baseline
-- **Commit:** `7616e6f344ee57a9a08c0ed55dba01701b4aaf23`
-- **CI:** GitHub Actions CI run #95 — completed successfully.
-- **Governance-only successor:** `b7b937f8e87af8882619f850078f84173b2d3b85` (runtime-identical documentation bootstrap).
+- **Current validated commit:** `930bd83fd3bb64559c4b5ab9da29b7201da9a223`
+- **CI:** GitHub Actions CI run #98 — completed successfully, including Maven Test.
+- **Previous reactive-UI rollback:** `5a8357eabed348534484d161d94c7d988c90244b`.
+- **Earlier runtime baseline:** `7616e6f344ee57a9a08c0ed55dba01701b4aaf23` (CI run #95 green).
+- **Governance-only bootstrap:** `b7b937f8e87af8882619f850078f84173b2d3b85`.
 
-## Evidence available before this UI cycle
-- Spring/Java CI was green on the runtime baseline.
-- Existing avatar page supported text, speech recognition, voice synthesis, avatar fallback, approval cards, and four coarse states: idle/listening/thinking/speaking.
-- No formal previous evolution scorecard existed in the repository. Future runs must not invent historical scores.
+## Current evidence
+- Spring/Java CI is green for Vayu Brain Gateway v1.
+- Gateway-focused tests cover healthy Ollama, OpenAI fallback, total brain outage, version/correlation ID, and degraded-state propagation.
+- Existing avatar page retains the nine-state interaction engine, barge-in, text/voice fallback, and approval UI.
+- No aggregate production telemetry exists yet for conversation quality, memory accuracy, voice reliability, UI latency, or resource use.
 
 ## Scorecard baseline
 | Dimension | Evidence status |
 |---|---|
-| Build stability | Green on CI run #95 |
+| Build stability | Green on CI run #98 |
 | Conversation quality | Not instrumented |
 | Personality consistency | Not instrumented |
-| Memory accuracy | Covered by existing automated tests, no aggregate metric |
-| Vayu handoff reliability/latency | Not yet instrumented as a versioned gateway |
-| Errors | No aggregate metric |
+| Memory accuracy | Existing automated tests; no aggregate metric |
+| Vayu handoff reliability/latency | v1 contract + per-request latency/correlation; no aggregate metric |
+| Errors | Stable gateway error codes; no aggregate rate metric |
 | Voice reliability | Fallback exists; no aggregate metric |
 | UI responsiveness | No measured latency baseline |
-| Accessibility | Partial semantics before current UI cycle |
+| Accessibility | Nine-state UI includes live regions/focus semantics; no scanner score |
 | Resource usage | Not instrumented |
 
 ## Rollback policy
-For the 2026-08-22 UI evolution, revert to `b7b937f8e87af8882619f850078f84173b2d3b85` to keep governance docs while restoring the previous runtime UI. If governance itself must be removed, return to `7616e6f344ee57a9a08c0ed55dba01701b4aaf23`.
+For gateway regressions, return to `5a8357eabed348534484d161d94c7d988c90244b`. For a deeper runtime rollback, return to `7616e6f344ee57a9a08c0ed55dba01701b4aaf23`. Normal evolution must preserve the KUPPA Constitution and approval gates.

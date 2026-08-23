@@ -59,7 +59,7 @@ Ordinary cognitive requests go through `VayuBrainGateway v1`. Each response incl
 - Fresh GitHub clone attempt: blocked because the execution environment cannot resolve `github.com`.
 - Added focused JUnit/Mockito tests for gateway and router success/fallback/failure paths.
 - Static source checks performed before publication: gateway version constant present, UUID correlation generation present, direct planner dependency on `BrainRouterService` removed, approval action paths remain before gateway invocation, and degraded response does not interpolate provider exception text.
-- Post-publish GitHub CI is the required build gate for this evolution because local Maven execution is unavailable. The run result must be checked before treating build stability as green.
+- GitHub Actions CI run #98 for implementation commit `930bd83fd3bb64559c4b5ab9da29b7201da9a223`: **PASS**. Checkout, Java setup, Maven Test, and post steps all completed successfully.
 
 ## Before/after metrics
 - Versioned KUPPA↔Vayu gateway contracts: **0 -> 1**.
