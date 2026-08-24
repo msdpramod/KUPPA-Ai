@@ -43,9 +43,9 @@ No responsibility moved. KUPPA only renders gateway state. Vayu continues to own
 
 ## Tests/build/lint/smoke checks run with results
 - Preflight confirmed branch `agent/avatar-ui` was identical to `efd238cc8e9a5fdcc53323a3c69008644843b2e6`.
-- Previous runtime baseline `930bd83fd3bb64559c4b5ab9da29b7201da9a223` remains CI-green on run #98.
+- Previous runtime baseline `930bd83fd3bb64559c4b5ab9da29b7201da9a223` was CI-green on run #98 before this change.
 - Added `AvatarBrainPresenceContractTest` for health metadata, browser event, Vayu-unavailable handling, `/api/chat`, and approval UI.
-- Post-publish GitHub Actions is the required build gate for this change; its final result must be recorded before advancing the known-good baseline.
+- GitHub Actions CI run #100 for implementation commit `1efac9e2485a6181413b30a003a88654c3cd9792`: **PASS**. Checkout, Java setup, Maven Test, cleanup, and job completion all succeeded.
 
 ## Relevant before/after metrics
 - Vayu health states visible in avatar UI: **0 -> 5** (`unknown`, `pending`, `healthy`, `fallback`, `offline`).
@@ -54,6 +54,7 @@ No responsibility moved. KUPPA only renders gateway state. Vayu continues to own
 - Browser Vayu-observability events: **0 -> 1**.
 - Conversation windows added: **0**.
 - Approval-gate behavior changed: **0**.
+- Build stability: **green -> green** (CI #98 baseline -> CI #100 implementation).
 
 ## Security/privacy/permission implications
 No new credentials, destinations, tool permissions, autonomous actions, or execution paths. Correlation IDs are exposed only in the status element title/event for diagnostics; raw provider exceptions remain excluded by the backend contract. Consequential actions remain approval gated.
@@ -64,10 +65,10 @@ No new credentials, destinations, tool permissions, autonomous actions, or execu
 - This does not create aggregate latency/reliability telemetry.
 
 ## Failures/fallbacks tested
-The new contract test statically verifies explicit unavailable/fallback handling. Backend runtime success/fallback/outage behavior remains covered by the CI-green Vayu gateway tests from the previous Heart cycle. Full post-change Maven validation is delegated to GitHub Actions after publication.
+The new contract test verifies explicit unavailable/fallback handling at the UI contract level. Backend runtime success/fallback/outage behavior remains covered by the Vayu gateway tests. CI #100 passed the complete Maven test step after this UI change.
 
 ## Rollback procedure / known-good reference
-If this UI change regresses interaction, return `agent/avatar-ui` to `efd238cc8e9a5fdcc53323a3c69008644843b2e6`. The validated runtime baseline remains `930bd83fd3bb64559c4b5ab9da29b7201da9a223` until the new CI gate passes.
+For regression, return `agent/avatar-ui` to `efd238cc8e9a5fdcc53323a3c69008644843b2e6`. The newly validated runtime implementation is `1efac9e2485a6181413b30a003a88654c3cd9792` (CI #100 green). The earlier validated gateway baseline remains `930bd83fd3bb64559c4b5ab9da29b7201da9a223`.
 
 ## Risks / technical debt introduced or removed
 Removes ambiguity between healthy, fallback, and unavailable brain responses. Adds a small UI dependency on the optional `brain` response field; missing metadata degrades safely to `unknown`.
@@ -79,7 +80,7 @@ No new dependencies.
 Not captured in this execution environment. Visual changes are limited to the existing avatar stage and status chips; no conversation panel/window was introduced.
 
 ## Follow-up work
-After CI passes, advance the known-good baseline. Future UI work can stream gateway phase events and add cancellable/resumable requests.
+Stream gateway phase events and add cancellable/resumable requests.
 
 ## Next evolution target
 Introduce cancellable Vayu handoffs with correlation-aware request lifecycle so barge-in can eventually interrupt an in-flight brain request rather than only speech playback.
