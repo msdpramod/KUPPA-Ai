@@ -6,6 +6,8 @@
 - Added per-request brain correlation IDs, provider/degraded metadata, and latency measurement.
 - Added `VAYU_HANDOFF` audit events and optional brain metadata to `/api/chat` responses.
 - Added explicit graceful degradation when Ollama/OpenAI brain providers are unavailable without leaking raw provider exception details.
+- Added avatar-level Vayu presence states for pending, healthy, fallback, unavailable, and unknown brain status without adding a conversation window.
+- Added visible provider/latency feedback and a `kuppa-brain-state-change` browser event sourced from `VayuBrainGateway v1` metadata.
 
 ### Safety
 - Consequential external/high-impact action approval flow is unchanged and still short-circuits before brain execution.
