@@ -19,6 +19,11 @@ public class LocalPlanner implements Planner {
 
     @Override
     public Plan plan(String message, List<PersonaMemory> memory) {
+        return plan(message, memory, null);
+    }
+
+    @Override
+    public Plan plan(String message, List<PersonaMemory> memory, String correlationId) {
         ActionIntentDetector.Intent intent = actionIntentDetector.detect(message);
 
         if (intent == ActionIntentDetector.Intent.EXTERNAL_COMMUNICATION) {
@@ -43,7 +48,7 @@ public class LocalPlanner implements Planner {
             );
         }
 
-        VayuBrainGateway.Response brain = brainGateway.ask(message, memory);
+        VayuBrainGateway.Response brain = brainGateway.ask(message, memory, correlationId);
         return new Plan(
             brain.message(),
             null, null, null, null, RiskLevel.LOW,

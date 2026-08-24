@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-25
+### Changed
+- Upgraded the explicit KUPPA HEART -> Vayu BRAIN boundary to `VayuBrainGateway v2` with caller-visible correlation IDs and cooperative turn cancellation.
+- Added an active Vayu request lifecycle registry, `POST /api/chat/{correlationId}/cancel`, stable cancellation metadata, and stale-result suppression after an accepted cancellation.
+- Added concurrency-focused tests for active-turn cancellation and correlation preservation.
+
+### Safety
+- Cancellation changes only Vayu brain-turn lifecycle; it does not grant KUPPA reasoning, provider-routing, tool, or execution authority.
+- Consequential external/high-impact action approval flow remains unchanged.
+- No secrets, new external destinations, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
+
 ## 2026-08-24
 ### Changed
 - Added versioned `VayuBrainGateway v1` as the explicit KUPPA HEART -> Vayu BRAIN cognition boundary.

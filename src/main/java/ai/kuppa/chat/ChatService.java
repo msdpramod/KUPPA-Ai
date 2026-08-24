@@ -33,13 +33,18 @@ public class ChatService {
 
     @Transactional
     public ChatResponse chat(String message) {
+        return chat(message, null);
+    }
+
+    @Transactional
+    public ChatResponse chat(String message, String correlationId) {
         chatRepository.save(new ChatMessage("USER", message));
 
         memoryCapture.capture(message).ifPresent(memory ->
                 audit.record("MEMORY_CAPTURED", memory.getId(),
                         memory.getCategory() + ": " + memory.getContent()));
 
-        Plan plan = planner.plan(message, memoryRepository.findByActiveTrueOrderByUpdatedAtDesc());
+        Plan plan = planner.plan(message, memoryRepository.findByActiveTrueOrderByUpdatedAtDesc(), correlationId);
         ProposedAction action = null;
         if (plan.hasAction()) {
             action = actionRepository.save(new ProposedAction(plan.actionType(), plan.actionSummary(), plan.actionPayload(), plan.reason(), plan.riskLevel()));
@@ -51,6 +56,7 @@ public class ChatService {
                     "contract=" + brain.contractVersion()
                             + ", provider=" + brain.provider()
                             + ", degraded=" + brain.degraded()
+                            + ", cancelled=" + brain.cancelled()
                             + ", latencyMs=" + brain.latencyMs()
                             + (brain.errorCode() == null ? "" : ", errorCode=" + brain.errorCode()));
         }
