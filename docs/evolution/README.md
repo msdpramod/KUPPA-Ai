@@ -12,7 +12,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-24 03:10 Heart | `2026/08/2026-08-24-0310-vayu-gateway-validation.md` | `efd238cc8e9a5fdcc53323a3c69008644843b2e6` | Documentation-only CI closeout |
 | 2026-08-24 15:00 UI | `2026/08/2026-08-24-1500-vayu-presence-ui.md` | `1efac9e2485a6181413b30a003a88654c3cd9792` | Avatar-level healthy/fallback/offline Vayu presence; CI #100 green |
 | 2026-08-24 15:10 UI | `2026/08/2026-08-24-1510-vayu-presence-validation.md` | `99f793c95eb9893caf87b9dc8b7b2d1c43d4ca8f` | Documentation-only CI closeout |
-| 2026-08-25 03:00 Heart | `2026/08/2026-08-25-0300-vayu-cancellable-handoff.md` | This implementation commit | Vayu gateway v2 cooperative cancellation + stale-result suppression |
+| 2026-08-25 03:00 Heart | `2026/08/2026-08-25-0300-vayu-cancellable-handoff.md` | `7e0df512eeb416a0bd0dfb3d4e8873a16195057c` | Vayu gateway v2 cooperative cancellation + stale-result suppression; CI #102 green |
+| 2026-08-25 03:10 Heart | `2026/08/2026-08-25-0310-vayu-cancellation-validation.md` | This validation commit | Documentation-only CI closeout and baseline promotion |
 
 ## Required preflight for future runs
 1. Read `docs/KUPPA_CONSTITUTION.md`.
