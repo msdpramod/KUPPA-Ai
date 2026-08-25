@@ -52,14 +52,22 @@ public class OpenAiConversationService {
     public boolean isConfigured() { return !apiKey.isBlank(); }
 
     public String answer(String currentMessage, List<PersonaMemory> memory) {
+        return answer(currentMessage, memory, VayuBrainGateway.TurnContext.auto());
+    }
+
+    public String answer(String currentMessage, List<PersonaMemory> memory,
+                         VayuBrainGateway.TurnContext turnContext) {
         if (!isConfigured()) {
             return "My voice loop is connected, but my conversational brain is not configured yet. Set OPENAI_API_KEY in the terminal that starts KUPPA AI, restart me, and then ask again.";
         }
         try {
+            VayuBrainGateway.TurnContext normalized = turnContext == null
+                    ? VayuBrainGateway.TurnContext.auto()
+                    : turnContext.normalized();
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("model", model);
             body.put("max_output_tokens", 900);
-            body.put("instructions", buildInstructions(memory));
+            body.put("instructions", buildInstructions(memory, normalized));
             body.put("input", buildConversationText(currentMessage));
 
             HttpRequest request = HttpRequest.newBuilder(RESPONSES_URI)
@@ -80,9 +88,10 @@ public class OpenAiConversationService {
         }
     }
 
-    private String buildInstructions(List<PersonaMemory> memory) {
+    private String buildInstructions(List<PersonaMemory> memory, VayuBrainGateway.TurnContext turnContext) {
         return "You are KUPPA AI, a private one-on-one personal assistant. Speak naturally and concisely, like a real conversation. " +
                 "Answer the user's actual question directly. Use recent conversation only to resolve current context; do not treat it as permanent persona memory. " +
+                turnContext.reasoningDirective() + " " +
                 "Do not claim an external action happened. External actions must always go through KUPPA AI's approval system. " +
                 "Use persona memory only when relevant. Treat tentative memory as a hypothesis rather than a fact and ask or hedge when it materially affects an answer.\n" +
                 memoryFormatter.format(memory);

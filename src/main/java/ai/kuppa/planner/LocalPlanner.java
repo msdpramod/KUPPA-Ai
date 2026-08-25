@@ -19,11 +19,17 @@ public class LocalPlanner implements Planner {
 
     @Override
     public Plan plan(String message, List<PersonaMemory> memory) {
-        return plan(message, memory, null);
+        return plan(message, memory, null, VayuBrainGateway.TurnContext.auto());
     }
 
     @Override
     public Plan plan(String message, List<PersonaMemory> memory, String correlationId) {
+        return plan(message, memory, correlationId, VayuBrainGateway.TurnContext.auto());
+    }
+
+    @Override
+    public Plan plan(String message, List<PersonaMemory> memory, String correlationId,
+                     VayuBrainGateway.TurnContext turnContext) {
         ActionIntentDetector.Intent intent = actionIntentDetector.detect(message);
 
         if (intent == ActionIntentDetector.Intent.EXTERNAL_COMMUNICATION) {
@@ -48,7 +54,7 @@ public class LocalPlanner implements Planner {
             );
         }
 
-        VayuBrainGateway.Response brain = brainGateway.ask(message, memory, correlationId);
+        VayuBrainGateway.Response brain = brainGateway.ask(message, memory, correlationId, turnContext);
         return new Plan(
             brain.message(),
             null, null, null, null, RiskLevel.LOW,

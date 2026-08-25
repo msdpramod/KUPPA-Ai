@@ -18,7 +18,11 @@ public class ChatController {
 
     @PostMapping
     public ChatService.ChatResponse chat(@Valid @RequestBody ChatRequest request) {
-        return service.chat(request.message(), request.correlationId());
+        return service.chat(
+                request.message(),
+                request.correlationId(),
+                request.turnMode(),
+                request.parentCorrelationId());
     }
 
     @PostMapping("/{correlationId}/cancel")
@@ -26,5 +30,9 @@ public class ChatController {
         return brainGateway.cancel(correlationId);
     }
 
-    public record ChatRequest(@NotBlank String message, String correlationId) {}
+    public record ChatRequest(
+            @NotBlank String message,
+            String correlationId,
+            String turnMode,
+            String parentCorrelationId) {}
 }

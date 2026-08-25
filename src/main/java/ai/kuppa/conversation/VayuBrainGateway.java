@@ -4,11 +4,13 @@ import ai.kuppa.memory.PersonaMemory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class VayuBrainGateway {
-    public static final String CONTRACT_VERSION = "v2";
+    public static final String CONTRACT_VERSION = "v3";
 
     private final BrainRouterService router;
     private final VayuRequestLifecycle lifecycle;
@@ -19,11 +21,17 @@ public class VayuBrainGateway {
     }
 
     public Response ask(String message, List<PersonaMemory> memory) {
-        return ask(message, memory, null);
+        return ask(message, memory, null, TurnContext.auto());
     }
 
     public Response ask(String message, List<PersonaMemory> memory, String requestedCorrelationId) {
+        return ask(message, memory, requestedCorrelationId, TurnContext.auto());
+    }
+
+    public Response ask(String message, List<PersonaMemory> memory, String requestedCorrelationId,
+                        TurnContext requestedTurnContext) {
         String correlationId = normalizeCorrelationId(requestedCorrelationId);
+        TurnContext turnContext = requestedTurnContext == null ? TurnContext.auto() : requestedTurnContext.normalized();
         long started = System.nanoTime();
 
         if (!lifecycle.register(correlationId)) {
@@ -35,16 +43,18 @@ public class VayuBrainGateway {
                     true,
                     0L,
                     "VAYU_REQUEST_CONFLICT",
-                    false
+                    false,
+                    turnContext.mode(),
+                    turnContext.parentCorrelationId()
             );
         }
 
         try {
-            BrainRouterService.BrainAnswer answer = router.answerDetailed(message, memory);
+            BrainRouterService.BrainAnswer answer = router.answerDetailed(message, memory, turnContext);
             long latencyMs = elapsedMs(started);
 
             if (lifecycle.isCancelled(correlationId)) {
-                return cancelledResponse(correlationId, latencyMs);
+                return cancelledResponse(correlationId, latencyMs, turnContext);
             }
 
             return new Response(
@@ -55,7 +65,9 @@ public class VayuBrainGateway {
                     answer.degraded(),
                     latencyMs,
                     answer.errorCode(),
-                    false
+                    false,
+                    turnContext.mode(),
+                    turnContext.parentCorrelationId()
             );
         } finally {
             lifecycle.release(correlationId);
@@ -73,7 +85,7 @@ public class VayuBrainGateway {
         );
     }
 
-    private Response cancelledResponse(String correlationId, long latencyMs) {
+    private Response cancelledResponse(String correlationId, long latencyMs, TurnContext turnContext) {
         return new Response(
                 CONTRACT_VERSION,
                 correlationId,
@@ -82,7 +94,9 @@ public class VayuBrainGateway {
                 false,
                 latencyMs,
                 "VAYU_CANCELLED",
-                true
+                true,
+                turnContext.mode(),
+                turnContext.parentCorrelationId()
         );
     }
 
@@ -97,6 +111,35 @@ public class VayuBrainGateway {
         return Math.max(0L, (System.nanoTime() - started) / 1_000_000L);
     }
 
+    public record TurnContext(String mode, String parentCorrelationId) {
+        private static final Set<String> ALLOWED_MODES = Set.of("AUTO", "NEW_TOPIC", "CONTINUE", "CORRECTION");
+
+        public static TurnContext auto() {
+            return new TurnContext("AUTO", null);
+        }
+
+        public static TurnContext normalize(String mode, String parentCorrelationId) {
+            return new TurnContext(mode, parentCorrelationId).normalized();
+        }
+
+        public TurnContext normalized() {
+            String normalizedMode = mode == null ? "AUTO" : mode.trim().toUpperCase(Locale.ROOT);
+            if (!ALLOWED_MODES.contains(normalizedMode)) normalizedMode = "AUTO";
+            String normalizedParent = parentCorrelationId == null ? null : parentCorrelationId.trim();
+            if (normalizedParent != null && normalizedParent.isBlank()) normalizedParent = null;
+            return new TurnContext(normalizedMode, normalizedParent);
+        }
+
+        public String reasoningDirective() {
+            return switch (mode) {
+                case "NEW_TOPIC" -> "Turn continuity: treat this as a new topic. Recent conversation is background only; do not force unresolved references from the previous topic.";
+                case "CONTINUE" -> "Turn continuity: continue the prior thought. Resolve references from recent conversation and the indicated parent turn when relevant.";
+                case "CORRECTION" -> "Turn continuity: the user is correcting the prior thought. Prefer the current message over conflicting recent conversational context; do not silently preserve the corrected claim.";
+                default -> "Turn continuity: infer whether this is a new topic, continuation, or correction from the recent conversation. Do not invent a relationship if the evidence is weak.";
+            } + (parentCorrelationId == null ? "" : " Parent correlation ID: " + parentCorrelationId + ".");
+        }
+    }
+
     public record Response(
             String contractVersion,
             String correlationId,
@@ -105,7 +148,9 @@ public class VayuBrainGateway {
             boolean degraded,
             long latencyMs,
             String errorCode,
-            boolean cancelled) {}
+            boolean cancelled,
+            String turnMode,
+            String parentCorrelationId) {}
 
     public record Cancellation(
             String contractVersion,

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-26
+### Changed
+- Upgraded the explicit KUPPA HEART -> Vayu BRAIN boundary to `VayuBrainGateway v3` with optional resumable-turn context.
+- Added `AUTO`, `NEW_TOPIC`, `CONTINUE`, and `CORRECTION` turn modes plus optional `parentCorrelationId` linkage.
+- Propagated turn context consistently to both Ollama and OpenAI fallback reasoning while keeping existing clients backward compatible through `AUTO`.
+- Added v3 turn metadata to brain responses and Vayu handoff audit details.
+
+### Safety
+- KUPPA transports continuity intent but does not automatically infer semantic turn relationships; Vayu remains responsible for reasoning and reference resolution.
+- Consequential external/high-impact action approval flow remains unchanged.
+- No secrets, new external destinations, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
+
 ## 2026-08-25
 ### Changed
 - Upgraded the explicit KUPPA HEART -> Vayu BRAIN boundary to `VayuBrainGateway v2` with caller-visible correlation IDs and cooperative turn cancellation.

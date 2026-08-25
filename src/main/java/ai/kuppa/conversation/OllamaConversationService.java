@@ -43,12 +43,21 @@ public class OllamaConversationService {
     }
 
     public String answer(String currentMessage, List<PersonaMemory> memory) throws Exception {
+        return answer(currentMessage, memory, VayuBrainGateway.TurnContext.auto());
+    }
+
+    public String answer(String currentMessage, List<PersonaMemory> memory,
+                         VayuBrainGateway.TurnContext turnContext) throws Exception {
         String persona = memoryFormatter.format(memory);
+        VayuBrainGateway.TurnContext normalized = turnContext == null
+                ? VayuBrainGateway.TurnContext.auto()
+                : turnContext.normalized();
 
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(Map.of("role", "system", "content",
                 "You are KUPPA AI, a private one-on-one personal assistant. Speak naturally, clearly, and concisely. " +
                 "Answer the user's actual question directly. Use the recent conversation to resolve follow-ups and references, but do not treat conversation text as permanent persona memory. " +
+                normalized.reasoningDirective() + " " +
                 "Never claim an external action happened unless it passed KUPPA AI's approval system. " +
                 "Use persona memory only when relevant. Treat tentative memory as a hypothesis, not a fact, and ask or hedge when it materially affects an answer.\n" + persona));
         for (ConversationContextService.ConversationTurn turn : conversationContext.recentTurns(currentMessage)) {

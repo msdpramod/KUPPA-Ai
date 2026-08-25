@@ -33,18 +33,28 @@ public class ChatService {
 
     @Transactional
     public ChatResponse chat(String message) {
-        return chat(message, null);
+        return chat(message, null, null, null);
     }
 
     @Transactional
     public ChatResponse chat(String message, String correlationId) {
+        return chat(message, correlationId, null, null);
+    }
+
+    @Transactional
+    public ChatResponse chat(String message, String correlationId, String turnMode, String parentCorrelationId) {
         chatRepository.save(new ChatMessage("USER", message));
 
         memoryCapture.capture(message).ifPresent(memory ->
                 audit.record("MEMORY_CAPTURED", memory.getId(),
                         memory.getCategory() + ": " + memory.getContent()));
 
-        Plan plan = planner.plan(message, memoryRepository.findByActiveTrueOrderByUpdatedAtDesc(), correlationId);
+        VayuBrainGateway.TurnContext turnContext = VayuBrainGateway.TurnContext.normalize(turnMode, parentCorrelationId);
+        Plan plan = planner.plan(
+                message,
+                memoryRepository.findByActiveTrueOrderByUpdatedAtDesc(),
+                correlationId,
+                turnContext);
         ProposedAction action = null;
         if (plan.hasAction()) {
             action = actionRepository.save(new ProposedAction(plan.actionType(), plan.actionSummary(), plan.actionPayload(), plan.reason(), plan.riskLevel()));
@@ -57,6 +67,8 @@ public class ChatService {
                             + ", provider=" + brain.provider()
                             + ", degraded=" + brain.degraded()
                             + ", cancelled=" + brain.cancelled()
+                            + ", turnMode=" + brain.turnMode()
+                            + (brain.parentCorrelationId() == null ? "" : ", parentCorrelationId=" + brain.parentCorrelationId())
                             + ", latencyMs=" + brain.latencyMs()
                             + (brain.errorCode() == null ? "" : ", errorCode=" + brain.errorCode()));
         }

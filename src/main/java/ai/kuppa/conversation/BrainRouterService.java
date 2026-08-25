@@ -26,8 +26,16 @@ public class BrainRouterService {
     }
 
     public BrainAnswer answerDetailed(String message, List<PersonaMemory> memory) {
+        return answerDetailed(message, memory, VayuBrainGateway.TurnContext.auto());
+    }
+
+    public BrainAnswer answerDetailed(String message, List<PersonaMemory> memory,
+                                      VayuBrainGateway.TurnContext turnContext) {
+        VayuBrainGateway.TurnContext normalized = turnContext == null
+                ? VayuBrainGateway.TurnContext.auto()
+                : turnContext.normalized();
         try {
-            String local = ollama.answer(message, memory);
+            String local = ollama.answer(message, memory, normalized);
             if (local != null && !local.isBlank()) {
                 return new BrainAnswer(local, "OLLAMA", false, null);
             }
@@ -35,7 +43,7 @@ public class BrainRouterService {
         } catch (Exception ollamaError) {
             if (openAiFallbackEnabled) {
                 try {
-                    String fallback = openAi.answer(message, memory);
+                    String fallback = openAi.answer(message, memory, normalized);
                     if (fallback != null && !fallback.isBlank()) {
                         return new BrainAnswer(fallback, "OPENAI_FALLBACK", true, "OLLAMA_UNAVAILABLE");
                     }
