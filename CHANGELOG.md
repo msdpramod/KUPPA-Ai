@@ -5,6 +5,8 @@
 - Upgraded the explicit KUPPA HEART -> Vayu BRAIN boundary to `VayuBrainGateway v2` with caller-visible correlation IDs and cooperative turn cancellation.
 - Added an active Vayu request lifecycle registry, `POST /api/chat/{correlationId}/cancel`, stable cancellation metadata, and stale-result suppression after an accepted cancellation.
 - Added concurrency-focused tests for active-turn cancellation and correlation preservation.
+- Wired the avatar-first UI to v2 correlation-aware cancellation for mic/Escape barge-in and typed topic supersession.
+- Added stale browser response suppression, a `kuppa-turn-cancelled` event, an interrupted Vayu presence state, and explicit speech-promise settlement when playback is stopped.
 
 ### Safety
 - Cancellation changes only Vayu brain-turn lifecycle; it does not grant KUPPA reasoning, provider-routing, tool, or execution authority.
