@@ -14,7 +14,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-24 15:10 UI | `2026/08/2026-08-24-1510-vayu-presence-validation.md` | `99f793c95eb9893caf87b9dc8b7b2d1c43d4ca8f` | Documentation-only CI closeout |
 | 2026-08-25 03:00 Heart | `2026/08/2026-08-25-0300-vayu-cancellable-handoff.md` | `7e0df512eeb416a0bd0dfb3d4e8873a16195057c` | Vayu gateway v2 cooperative cancellation + stale-result suppression; CI #102 green |
 | 2026-08-25 03:10 Heart | `2026/08/2026-08-25-0310-vayu-cancellation-validation.md` | `4f0e874ea724a386060c4379a42881da7516982d` | Documentation-only CI closeout and baseline promotion |
-| 2026-08-25 15:00 UI | `2026/08/2026-08-25-1500-correlation-aware-barge-in.md` | This implementation commit | Browser correlation-aware cancellation, topic supersession, and stale-response guards; awaiting CI validation |
+| 2026-08-25 15:00 UI | `2026/08/2026-08-25-1500-correlation-aware-barge-in.md` | `2677674a4032ea38b3019ffba04816748793b734` | Browser correlation-aware cancellation, topic supersession, stale-response guards; CI #104 green |
+| 2026-08-25 15:10 UI | `2026/08/2026-08-25-1510-correlation-aware-barge-in-validation.md` | This validation commit | Documentation-only CI closeout and baseline promotion |
 
 ## Required preflight for future runs
 1. Read `docs/KUPPA_CONSTITUTION.md`.
