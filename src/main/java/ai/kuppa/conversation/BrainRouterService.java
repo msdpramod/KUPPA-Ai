@@ -26,7 +26,25 @@ public class BrainRouterService {
     }
 
     public BrainAnswer answerDetailed(String message, List<PersonaMemory> memory) {
-        return answerDetailed(message, memory, VayuBrainGateway.TurnContext.auto());
+        try {
+            String local = ollama.answer(message, memory);
+            if (local != null && !local.isBlank()) {
+                return new BrainAnswer(local, "OLLAMA", false, null);
+            }
+            throw new IllegalStateException("Ollama returned an empty response");
+        } catch (Exception ollamaError) {
+            if (openAiFallbackEnabled) {
+                try {
+                    String fallback = openAi.answer(message, memory);
+                    if (fallback != null && !fallback.isBlank()) {
+                        return new BrainAnswer(fallback, "OPENAI_FALLBACK", true, "OLLAMA_UNAVAILABLE");
+                    }
+                } catch (Exception ignored) {
+                    // The gateway exposes a stable degraded state instead of leaking provider exception details.
+                }
+            }
+            return unavailable();
+        }
     }
 
     public BrainAnswer answerDetailed(String message, List<PersonaMemory> memory,
@@ -51,13 +69,17 @@ public class BrainRouterService {
                     // The gateway exposes a stable degraded state instead of leaking provider exception details.
                 }
             }
-            return new BrainAnswer(
-                    "I’m here, but Vayu’s reasoning service is temporarily unavailable. I can still stay with the conversation, but I won’t pretend I completed brain-level reasoning. Please try again shortly.",
-                    "NONE",
-                    true,
-                    "VAYU_UNAVAILABLE"
-            );
+            return unavailable();
         }
+    }
+
+    private BrainAnswer unavailable() {
+        return new BrainAnswer(
+                "I’m here, but Vayu’s reasoning service is temporarily unavailable. I can still stay with the conversation, but I won’t pretend I completed brain-level reasoning. Please try again shortly.",
+                "NONE",
+                true,
+                "VAYU_UNAVAILABLE"
+        );
     }
 
     public record BrainAnswer(String message, String provider, boolean degraded, String errorCode) {}

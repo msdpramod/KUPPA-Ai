@@ -16,7 +16,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-25 03:10 Heart | `2026/08/2026-08-25-0310-vayu-cancellation-validation.md` | `4f0e874ea724a386060c4379a42881da7516982d` | Documentation-only CI closeout and baseline promotion |
 | 2026-08-25 15:00 UI | `2026/08/2026-08-25-1500-correlation-aware-barge-in.md` | `2677674a4032ea38b3019ffba04816748793b734` | Browser correlation-aware cancellation, topic supersession, stale-response guards; CI #104 green |
 | 2026-08-25 15:10 UI | `2026/08/2026-08-25-1510-correlation-aware-barge-in-validation.md` | `962e78209d443f498578891777320547a1ccf88f` | Documentation-only CI closeout and baseline promotion; CI #105 green |
-| 2026-08-26 03:00 Heart | `2026/08/2026-08-26-0300-resumable-turn-context-v3.md` | This implementation commit | Vayu gateway v3 resumable-turn context; CI pending |
+| 2026-08-26 03:00 Heart | `2026/08/2026-08-26-0300-resumable-turn-context-v3.md` | `58bc60f202ca70b58ded83df92cda66e732ebed3` | Vayu gateway v3 resumable-turn context; CI #106 found router compatibility regression |
+| 2026-08-26 03:15 Heart | `2026/08/2026-08-26-0315-v3-router-compatibility-fix.md` | This regression-fix commit | Restore legacy router compatibility while preserving v3 context path; CI pending |
 
 ## Required preflight for future runs
 1. Read `docs/KUPPA_CONSTITUTION.md`.
