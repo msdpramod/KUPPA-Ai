@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-27
+### Changed
+- Persisted Vayu `correlationId`, `turnMode`, and `parentCorrelationId` with chat messages so explicit continuation/correction context can survive browser-local state loss.
+- Added server-side correlation lookup that restores a persisted parent turn for `CONTINUE` and `CORRECTION` requests while safely falling back when the parent is missing.
+- Kept Ollama and OpenAI fallback on the same correlation-aware conversation context path.
+
+### Safety
+- KUPPA persists interaction metadata only; Vayu remains responsible for semantic reference resolution and reasoning.
+- Consequential external/high-impact action approval flow remains unchanged.
+- No secrets, new external destinations, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
+
 ## 2026-08-26
 ### Changed
 - Upgraded the explicit KUPPA HEART -> Vayu BRAIN boundary to `VayuBrainGateway v3` with optional resumable-turn context.

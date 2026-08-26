@@ -60,7 +60,7 @@ public class OllamaConversationService {
                 normalized.reasoningDirective() + " " +
                 "Never claim an external action happened unless it passed KUPPA AI's approval system. " +
                 "Use persona memory only when relevant. Treat tentative memory as a hypothesis, not a fact, and ask or hedge when it materially affects an answer.\n" + persona));
-        for (ConversationContextService.ConversationTurn turn : conversationContext.recentTurns(currentMessage)) {
+        for (ConversationContextService.ConversationTurn turn : conversationContext.recentTurns(currentMessage, normalized)) {
             messages.add(Map.of("role", turn.role(), "content", turn.content()));
         }
 

@@ -68,7 +68,7 @@ public class OpenAiConversationService {
             body.put("model", model);
             body.put("max_output_tokens", 900);
             body.put("instructions", buildInstructions(memory, normalized));
-            body.put("input", buildConversationText(currentMessage));
+            body.put("input", buildConversationText(currentMessage, normalized));
 
             HttpRequest request = HttpRequest.newBuilder(RESPONSES_URI)
                     .timeout(Duration.ofSeconds(60))
@@ -97,9 +97,9 @@ public class OpenAiConversationService {
                 memoryFormatter.format(memory);
     }
 
-    private String buildConversationText(String currentMessage) {
+    private String buildConversationText(String currentMessage, VayuBrainGateway.TurnContext turnContext) {
         StringBuilder transcript = new StringBuilder();
-        for (ConversationContextService.ConversationTurn turn : conversationContext.recentTurns(currentMessage)) {
+        for (ConversationContextService.ConversationTurn turn : conversationContext.recentTurns(currentMessage, turnContext)) {
             transcript.append("user".equals(turn.role()) ? "User: " : "KUPPA AI: ")
                     .append(turn.content())
                     .append('\n');

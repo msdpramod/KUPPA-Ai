@@ -5,4 +5,5 @@ import java.util.List;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, String> {
     List<ChatMessage> findTop50ByOrderByCreatedAtDesc();
+    List<ChatMessage> findByCorrelationIdOrderByCreatedAtAsc(String correlationId);
 }

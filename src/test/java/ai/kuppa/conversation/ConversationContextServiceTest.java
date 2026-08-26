@@ -63,4 +63,43 @@ class ConversationContextServiceTest {
         assertEquals("message-9", turns.get(0).content());
         assertEquals("message-20", turns.get(11).content());
     }
+
+    @Test
+    void restoresPersistedParentTurnForExplicitContinuation() {
+        ChatMessageRepository repository = mock(ChatMessageRepository.class);
+        when(repository.findTop50ByOrderByCreatedAtDesc()).thenReturn(List.of(
+                new ChatMessage("USER", "continue that", "child-1", "CONTINUE", "parent-1")
+        ));
+        when(repository.findByCorrelationIdOrderByCreatedAtAsc("parent-1")).thenReturn(List.of(
+                new ChatMessage("USER", "Explain the deployment options", "parent-1", "AUTO", null),
+                new ChatMessage("KUPPA_AI", "There are VPS and GPU-hosted options.", "parent-1", "AUTO", null)
+        ));
+
+        ConversationContextService service = new ConversationContextService(repository);
+        List<ConversationContextService.ConversationTurn> turns = service.recentTurns(
+                "continue that",
+                VayuBrainGateway.TurnContext.normalize("CONTINUE", "parent-1"));
+
+        assertEquals(3, turns.size());
+        assertEquals("Explain the deployment options", turns.get(0).content());
+        assertEquals("There are VPS and GPU-hosted options.", turns.get(1).content());
+        assertEquals("continue that", turns.get(2).content());
+    }
+
+    @Test
+    void missingPersistedParentFallsBackToRecentContext() {
+        ChatMessageRepository repository = mock(ChatMessageRepository.class);
+        when(repository.findTop50ByOrderByCreatedAtDesc()).thenReturn(List.of(
+                new ChatMessage("USER", "continue that")
+        ));
+        when(repository.findByCorrelationIdOrderByCreatedAtAsc("missing-parent")).thenReturn(List.of());
+
+        ConversationContextService service = new ConversationContextService(repository);
+        List<ConversationContextService.ConversationTurn> turns = service.recentTurns(
+                "continue that",
+                VayuBrainGateway.TurnContext.normalize("CONTINUE", "missing-parent"));
+
+        assertEquals(1, turns.size());
+        assertEquals("continue that", turns.get(0).content());
+    }
 }

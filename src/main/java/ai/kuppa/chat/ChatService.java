@@ -11,6 +11,8 @@ import ai.kuppa.planner.Planner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 public class ChatService {
     private final ChatMessageRepository chatRepository;
@@ -43,17 +45,20 @@ public class ChatService {
 
     @Transactional
     public ChatResponse chat(String message, String correlationId, String turnMode, String parentCorrelationId) {
-        chatRepository.save(new ChatMessage("USER", message));
+        String requestCorrelationId = normalizeCorrelationId(correlationId);
+        VayuBrainGateway.TurnContext turnContext = VayuBrainGateway.TurnContext.normalize(turnMode, parentCorrelationId);
+
+        chatRepository.save(new ChatMessage(
+                "USER", message, requestCorrelationId, turnContext.mode(), turnContext.parentCorrelationId()));
 
         memoryCapture.capture(message).ifPresent(memory ->
                 audit.record("MEMORY_CAPTURED", memory.getId(),
                         memory.getCategory() + ": " + memory.getContent()));
 
-        VayuBrainGateway.TurnContext turnContext = VayuBrainGateway.TurnContext.normalize(turnMode, parentCorrelationId);
         Plan plan = planner.plan(
                 message,
                 memoryRepository.findByActiveTrueOrderByUpdatedAtDesc(),
-                correlationId,
+                requestCorrelationId,
                 turnContext);
         ProposedAction action = null;
         if (plan.hasAction()) {
@@ -72,8 +77,14 @@ public class ChatService {
                             + ", latencyMs=" + brain.latencyMs()
                             + (brain.errorCode() == null ? "" : ", errorCode=" + brain.errorCode()));
         }
-        chatRepository.save(new ChatMessage("KUPPA_AI", plan.response()));
+        chatRepository.save(new ChatMessage(
+                "KUPPA_AI", plan.response(), requestCorrelationId, turnContext.mode(), turnContext.parentCorrelationId()));
         return new ChatResponse(plan.response(), action, plan.brain());
+    }
+
+    private String normalizeCorrelationId(String correlationId) {
+        if (correlationId == null || correlationId.isBlank()) return UUID.randomUUID().toString();
+        return correlationId.trim();
     }
 
     public record ChatResponse(String message, ProposedAction proposedAction, VayuBrainGateway.Response brain) {}
