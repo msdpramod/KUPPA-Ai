@@ -49,6 +49,28 @@ class AvatarBrainPresenceContractTest {
         assertTrue(html.contains("Vayu · turn interrupted"));
     }
 
+    @Test
+    void avatarUiUsesExplicitV3ContinuityWithoutInferringSemantics() throws IOException {
+        String html = resource("/static/index.html");
+
+        assertTrue(html.contains("AUTO:'AUTO'"));
+        assertTrue(html.contains("NEW_TOPIC:'NEW_TOPIC'"));
+        assertTrue(html.contains("CONTINUE:'CONTINUE'"));
+        assertTrue(html.contains("CORRECTION:'CORRECTION'"));
+        assertTrue(html.contains("data-turn-mode=\"CONTINUE\""));
+        assertTrue(html.contains("data-turn-mode=\"CORRECTION\""));
+        assertTrue(html.contains("data-turn-mode=\"NEW_TOPIC\""));
+        assertTrue(html.contains("function selectTurnMode(mode)"));
+        assertTrue(html.contains("function consumeTurnContext()"));
+        assertTrue(html.contains("lastCompletedCorrelationId"));
+        assertTrue(html.contains("turnMode:turn.turnMode"));
+        assertTrue(html.contains("parentCorrelationId:turn.parentCorrelationId"));
+        assertTrue(html.contains("kuppa-turn-context-change"));
+        assertTrue(html.contains("kuppa-turn-completed"));
+        assertTrue(html.contains("pendingTurnMode=TURN_MODES.AUTO"));
+        assertTrue(html.contains("contractVersion:'v3'"));
+    }
+
     private String resource(String path) throws IOException {
         try (InputStream in = getClass().getResourceAsStream(path)) {
             if (in == null) {

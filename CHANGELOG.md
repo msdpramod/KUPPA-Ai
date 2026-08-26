@@ -6,9 +6,11 @@
 - Added `AUTO`, `NEW_TOPIC`, `CONTINUE`, and `CORRECTION` turn modes plus optional `parentCorrelationId` linkage.
 - Propagated turn context consistently to both Ollama and OpenAI fallback reasoning while keeping existing clients backward compatible through `AUTO`.
 - Added v3 turn metadata to brain responses and Vayu handoff audit details.
+- Wired the avatar-first UI to v3 through explicit, one-shot Continue / Correct / New topic controls while leaving ordinary natural language in `AUTO`.
+- Added browser `kuppa-turn-context-change` and `kuppa-turn-completed` events and last-completed-turn parent linkage for explicit Continue/Correct interactions.
 
 ### Safety
-- KUPPA transports continuity intent but does not automatically infer semantic turn relationships; Vayu remains responsible for reasoning and reference resolution.
+- KUPPA transports explicit continuity intent but does not infer semantic turn relationships from message text; Vayu remains responsible for reasoning and reference resolution.
 - Consequential external/high-impact action approval flow remains unchanged.
 - No secrets, new external destinations, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
 
