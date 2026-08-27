@@ -23,7 +23,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-26 15:10 UI | `2026/08/2026-08-26-1510-explicit-turn-controls-validation.md` | `362538113838df4fbcdd53605c85dc0335b29e70` | Documentation-only CI closeout and baseline promotion |
 | 2026-08-27 03:00 Heart | `2026/08/2026-08-27-0300-correlation-keyed-conversation-persistence.md` | `74ef76ee8624b4d6df256311d13ce15455646556` | Correlation-keyed persistence + parent restoration; CI #111 green |
 | 2026-08-27 03:10 Heart | `2026/08/2026-08-27-0310-correlation-persistence-validation.md` | `f315a2d75ebd928bd28e0e17bc928cf1667e54ab` | Documentation-only CI closeout and baseline promotion |
-| 2026-08-27 15:00 UI | `2026/08/2026-08-27-1500-session-scoped-continuity-recovery.md` | This implementation commit | Same-browser refresh recovery for explicit continuity; CI pending |
+| 2026-08-27 15:00 UI | `2026/08/2026-08-27-1500-session-scoped-continuity-recovery.md` | `33ad4d0b1c76bf7886f33d165b5fee1a4da989b3` | Same-browser refresh recovery for explicit continuity; CI #113 green |
+| 2026-08-27 15:10 UI | `2026/08/2026-08-27-1510-session-continuity-validation.md` | This validation commit | Documentation-only CI closeout and baseline promotion |
 
 ## Required preflight for future runs
 1. Read `docs/KUPPA_CONSTITUTION.md`.

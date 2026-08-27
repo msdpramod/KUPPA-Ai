@@ -4,6 +4,7 @@
 - **Cycle:** Body / UI / Human Interaction
 - **Commit purpose:** Restore explicit Continue/Correct capability after browser refresh without restoring a conversation window or exposing transcript content.
 - **Hypothesis:** A high-entropy browser session key plus metadata-only server recovery will preserve conversational continuity across refresh while keeping KUPPA as the HEART and semantic reference reasoning in Vayu.
+- **Implementation commit:** `33ad4d0b1c76bf7886f33d165b5fee1a4da989b3`
 
 ## Architectural context
 The 03:00 Heart cycle made turn correlation persistent and allowed Vayu to resolve a supplied historical parent server-side. The remaining UI gap was discovery: after a refresh, `lastCompletedCorrelationId` was browser-memory-only, so Continue and Correct became disabled even though the server still had the turn. A global latest-turn endpoint would be unsafe for future cloud/multi-user use, so this cycle introduces browser-session scoping instead.
@@ -48,17 +49,21 @@ KUPPA HEART gains persistence of interaction continuity identity only. It does n
 - No new configuration keys or dependencies.
 
 ## Tests/build/lint/smoke checks run with results
-Preflight evidence: current runtime baseline `74ef76ee8624b4d6df256311d13ce15455646556`; GitHub Actions CI #111 passed full Maven Test. New automated tests are included in this commit; authoritative post-commit CI is required before baseline promotion. Relevant failure paths encoded in tests: invalid session ID => unavailable/no repository access; unknown session => unavailable/no fabricated parent.
+- Preflight runtime `74ef76ee8624b4d6df256311d13ce15455646556`: CI #111 **PASS**.
+- Candidate implementation `33ad4d0b1c76bf7886f33d165b5fee1a4da989b3`: GitHub Actions CI #113 **PASS**.
+- CI #113 completed checkout, Java setup, full Maven `Test`, cleanup, and job completion successfully.
+- New focused coverage includes successful metadata recovery, invalid session => unavailable/no repository access, unknown session => unavailable/no fabricated parent, and avatar contract assertions for local session persistence/recovery wiring.
 
 ## Relevant before/after metrics
 - Refresh-restorable parent identity: **0 -> 1 session-scoped path**.
 - Session-scoped recovery endpoint: **0 -> 1**.
 - Transcript fields exposed by recovery API: **0 -> 0**.
-- Cancelled turns eligible for session recovery: **possible if globally searched -> explicitly excluded from session recovery**.
-- Browser recovery events: **0 -> 2 (success/failure observability)**.
+- Cancelled turns eligible for session recovery: **not intentionally bounded -> explicitly excluded**.
+- Browser recovery events: **0 -> 2 success/failure observability paths**.
 - Conversation windows: **0 -> 0**.
 - Semantic classifiers added to KUPPA: **0**.
 - Approval behavior changed: **0**.
+- Build stability: **green #111 -> green #113**.
 
 ## Security/privacy/permission implications
 The browser session ID is high entropy and scoped to continuity lookup, but it is explicitly **not authentication or authorization**. The recovery API deliberately returns no message text, persona memory, actions, tool output, or user profile data. Multi-user cloud deployment still requires real owner/session authentication before this mechanism can be considered an authorization boundary. Existing approval gates remain unchanged.
@@ -71,10 +76,10 @@ The browser session ID is high entropy and scoped to continuity lookup, but it i
 - No retention policy or aggregate continuity telemetry exists yet.
 
 ## Failures/fallbacks tested
-Invalid session identifiers and unknown sessions return `available=false` with no fabricated correlation ID. Browser recovery failure leaves Continue/Correct disabled and ordinary `AUTO` conversation fully usable. Existing Vayu provider fallback, cancellation, stale-response suppression, and approval behavior are intended to remain unchanged and must be confirmed by full CI before promotion.
+Invalid session identifiers and unknown sessions return `available=false` with no fabricated correlation ID. Browser recovery failure leaves Continue/Correct disabled and ordinary `AUTO` conversation fully usable. Full CI confirms existing Vayu provider fallback, cancellation, stale-response suppression, and approval tests remain green.
 
 ## Rollback procedure / known-good reference
-Do not promote until CI is green. Current known-good runtime remains `74ef76ee8624b4d6df256311d13ce15455646556` (CI #111). If this candidate regresses, move the runtime branch back to that commit; the new nullable database column/index are additive.
+Validated implementation: `33ad4d0b1c76bf7886f33d165b5fee1a4da989b3` (CI #113 green). Roll back runtime behavior to `74ef76ee8624b4d6df256311d13ce15455646556` (CI #111 green) if needed; the new nullable database column/index are additive.
 
 ## Risks / technical debt introduced or removed
 Removed: refresh-only loss of explicit parent identity for the same browser session. Added/remaining: unauthenticated session metadata is not suitable as a cross-user security boundary; explicit migration tooling and CSP/session hardening remain needed.
