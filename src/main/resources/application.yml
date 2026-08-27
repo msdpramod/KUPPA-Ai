@@ -41,3 +41,6 @@ kuppa:
     length-scale: ${KUPPA_VOICE_LENGTH_SCALE:1.04}
     noise-scale: ${KUPPA_VOICE_NOISE_SCALE:0.55}
     noise-w-scale: ${KUPPA_VOICE_NOISE_W_SCALE:0.72}
+  continuity:
+    signing-secret: ${KUPPA_CONTINUITY_SIGNING_SECRET:}
+    session-ttl-seconds: ${KUPPA_CONTINUITY_SESSION_TTL_SECONDS:2592000}

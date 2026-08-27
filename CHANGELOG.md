@@ -8,12 +8,16 @@
 - Added browser-session-scoped resumable-turn recovery so Continue/Correct can return after refresh without restoring transcript text or adding a conversation window.
 - Added a metadata-only `GET /api/chat/resumable?clientSessionId=...` contract and a random browser session identifier persisted in local storage.
 - Excluded cancelled Vayu turns from resumable-session recovery.
+- Added an additive server-issued signed continuity-session contract with expiring HMAC credentials for cloud-readiness hardening.
+- Added `POST /api/chat/session` and token-protected `GET /api/chat/resumable/secure` while preserving the current UI path until a separately validated migration.
 
 ### Safety
 - KUPPA persists interaction metadata only; Vayu remains responsible for semantic reference resolution and reasoning.
-- The resumable endpoint returns only availability, correlation ID, and completion time; it does not return conversation text and the browser session ID is not treated as authentication.
+- The resumable endpoints return only availability, correlation ID, and completion time; they do not return conversation text.
+- The new signed credential proves possession of a server-issued continuity session only; it is not presented as owner authentication.
+- `KUPPA_CONTINUITY_SIGNING_SECRET` is environment-only and no credential secret is committed.
 - Consequential external/high-impact action approval flow remains unchanged.
-- No secrets, new external destinations, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
+- No unrestricted shell execution, self-modification, or autonomous external actions were introduced.
 
 ## 2026-08-26
 ### Changed
@@ -53,7 +57,7 @@
 
 ### Safety
 - Consequential external/high-impact action approval flow is unchanged and still short-circuits before brain execution.
-- No secrets, new network destinations, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
+- No secrets, new network destinations, unrestricted shell execution, self-modification, or autonomous consequential actions were introduced.
 
 ## 2026-08-22
 ### Changed
