@@ -13,7 +13,6 @@ class AvatarBrainPresenceContractTest {
     @Test
     void avatarUiConsumesVayuGatewayHealthWithoutAddingBrainLogic() throws IOException {
         String html = resource("/static/index.html");
-
         assertTrue(html.contains("data-brain=\"unknown\""));
         assertTrue(html.contains("function applyBrainStatus(brain)"));
         assertTrue(html.contains("applyBrainStatus(data.brain)"));
@@ -34,7 +33,6 @@ class AvatarBrainPresenceContractTest {
     @Test
     void avatarUiCancelsAndSupersedesVayuTurnsByCorrelationId() throws IOException {
         String html = resource("/static/index.html");
-
         assertTrue(html.contains("function newCorrelationId()"));
         assertTrue(html.contains("correlationId:turn.correlationId"));
         assertTrue(html.contains("/cancel`"));
@@ -52,7 +50,6 @@ class AvatarBrainPresenceContractTest {
     @Test
     void avatarUiUsesExplicitV3ContinuityWithoutInferringSemantics() throws IOException {
         String html = resource("/static/index.html");
-
         assertTrue(html.contains("AUTO:'AUTO'"));
         assertTrue(html.contains("NEW_TOPIC:'NEW_TOPIC'"));
         assertTrue(html.contains("CONTINUE:'CONTINUE'"));
@@ -71,11 +68,21 @@ class AvatarBrainPresenceContractTest {
         assertTrue(html.contains("contractVersion:'v3'"));
     }
 
+    @Test
+    void avatarUiRestoresContinuityByOpaqueBrowserSessionWithoutTranscriptRecovery() throws IOException {
+        String html = resource("/static/index.html");
+        assertTrue(html.contains("kuppa.clientSessionId.v1"));
+        assertTrue(html.contains("localStorage.getItem"));
+        assertTrue(html.contains("clientSessionId:clientSessionId"));
+        assertTrue(html.contains("/api/chat/resumable?clientSessionId="));
+        assertTrue(html.contains("function restoreContinuity()"));
+        assertTrue(html.contains("kuppa-continuity-restored"));
+        assertTrue(html.contains("lastCompletedCorrelationId=data.correlationId"));
+    }
+
     private String resource(String path) throws IOException {
         try (InputStream in = getClass().getResourceAsStream(path)) {
-            if (in == null) {
-                throw new IOException("Missing test resource " + path);
-            }
+            if (in == null) throw new IOException("Missing test resource " + path);
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
     }

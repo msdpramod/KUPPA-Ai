@@ -5,9 +5,13 @@
 - Persisted Vayu `correlationId`, `turnMode`, and `parentCorrelationId` with chat messages so explicit continuation/correction context can survive browser-local state loss.
 - Added server-side correlation lookup that restores a persisted parent turn for `CONTINUE` and `CORRECTION` requests while safely falling back when the parent is missing.
 - Kept Ollama and OpenAI fallback on the same correlation-aware conversation context path.
+- Added browser-session-scoped resumable-turn recovery so Continue/Correct can return after refresh without restoring transcript text or adding a conversation window.
+- Added a metadata-only `GET /api/chat/resumable?clientSessionId=...` contract and a random browser session identifier persisted in local storage.
+- Excluded cancelled Vayu turns from resumable-session recovery.
 
 ### Safety
 - KUPPA persists interaction metadata only; Vayu remains responsible for semantic reference resolution and reasoning.
+- The resumable endpoint returns only availability, correlation ID, and completion time; it does not return conversation text and the browser session ID is not treated as authentication.
 - Consequential external/high-impact action approval flow remains unchanged.
 - No secrets, new external destinations, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
 

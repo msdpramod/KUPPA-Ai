@@ -10,10 +10,12 @@ import org.springframework.web.bind.annotation.*;
 public class ChatController {
     private final ChatService service;
     private final VayuBrainGateway brainGateway;
+    private final ChatContinuityService continuityService;
 
-    public ChatController(ChatService service, VayuBrainGateway brainGateway) {
+    public ChatController(ChatService service, VayuBrainGateway brainGateway, ChatContinuityService continuityService) {
         this.service = service;
         this.brainGateway = brainGateway;
+        this.continuityService = continuityService;
     }
 
     @PostMapping
@@ -22,7 +24,13 @@ public class ChatController {
                 request.message(),
                 request.correlationId(),
                 request.turnMode(),
-                request.parentCorrelationId());
+                request.parentCorrelationId(),
+                request.clientSessionId());
+    }
+
+    @GetMapping("/resumable")
+    public ChatContinuityService.ResumableTurn resumable(@RequestParam String clientSessionId) {
+        return continuityService.latest(clientSessionId);
     }
 
     @PostMapping("/{correlationId}/cancel")
@@ -34,5 +42,6 @@ public class ChatController {
             @NotBlank String message,
             String correlationId,
             String turnMode,
-            String parentCorrelationId) {}
+            String parentCorrelationId,
+            String clientSessionId) {}
 }

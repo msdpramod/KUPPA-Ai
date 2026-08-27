@@ -35,21 +35,28 @@ public class ChatService {
 
     @Transactional
     public ChatResponse chat(String message) {
-        return chat(message, null, null, null);
+        return chat(message, null, null, null, null);
     }
 
     @Transactional
     public ChatResponse chat(String message, String correlationId) {
-        return chat(message, correlationId, null, null);
+        return chat(message, correlationId, null, null, null);
     }
 
     @Transactional
     public ChatResponse chat(String message, String correlationId, String turnMode, String parentCorrelationId) {
+        return chat(message, correlationId, turnMode, parentCorrelationId, null);
+    }
+
+    @Transactional
+    public ChatResponse chat(String message, String correlationId, String turnMode,
+                             String parentCorrelationId, String clientSessionId) {
         String requestCorrelationId = normalizeCorrelationId(correlationId);
+        String requestSessionId = ChatContinuityService.normalizeSessionId(clientSessionId);
         VayuBrainGateway.TurnContext turnContext = VayuBrainGateway.TurnContext.normalize(turnMode, parentCorrelationId);
 
         chatRepository.save(new ChatMessage(
-                "USER", message, requestCorrelationId, turnContext.mode(), turnContext.parentCorrelationId()));
+                "USER", message, requestCorrelationId, turnContext.mode(), turnContext.parentCorrelationId(), requestSessionId));
 
         memoryCapture.capture(message).ifPresent(memory ->
                 audit.record("MEMORY_CAPTURED", memory.getId(),
@@ -77,8 +84,11 @@ public class ChatService {
                             + ", latencyMs=" + brain.latencyMs()
                             + (brain.errorCode() == null ? "" : ", errorCode=" + brain.errorCode()));
         }
+
+        boolean cancelled = plan.brain() != null && plan.brain().cancelled();
         chatRepository.save(new ChatMessage(
-                "KUPPA_AI", plan.response(), requestCorrelationId, turnContext.mode(), turnContext.parentCorrelationId()));
+                "KUPPA_AI", plan.response(), requestCorrelationId, turnContext.mode(), turnContext.parentCorrelationId(),
+                cancelled ? null : requestSessionId));
         return new ChatResponse(plan.response(), action, plan.brain());
     }
 
