@@ -25,7 +25,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-27 03:10 Heart | `2026/08/2026-08-27-0310-correlation-persistence-validation.md` | `f315a2d75ebd928bd28e0e17bc928cf1667e54ab` | Documentation-only CI closeout and baseline promotion |
 | 2026-08-27 15:00 UI | `2026/08/2026-08-27-1500-session-scoped-continuity-recovery.md` | `33ad4d0b1c76bf7886f33d165b5fee1a4da989b3` | Same-browser refresh recovery for explicit continuity; CI #113 green |
 | 2026-08-27 15:10 UI | `2026/08/2026-08-27-1510-session-continuity-validation.md` | `e9cacd5bfbb4610f5863c46e5646bcd3c4251a95` | Documentation-only CI closeout and baseline promotion |
-| 2026-08-27 16:30 Heart | `2026/08/2026-08-27-1630-signed-continuity-session-contract.md` | Candidate commit | Additive signed continuity-session possession contract; full CI required before promotion |
+| 2026-08-27 16:30 Heart | `2026/08/2026-08-27-1630-signed-continuity-session-contract.md` | `a4c9171eda1e6f6035e9f35ae766defab26b2aba` | Signed continuity-session possession contract; CI #115 green; promoted via `a2adb3b89cc1dad11be4ef2f20ccff6fb70494b7` |
+| 2026-08-27 16:40 Heart | `2026/08/2026-08-27-1640-signed-continuity-session-validation.md` | This validation commit | Documentation-only CI closeout and baseline promotion |
 
 ## Required preflight for future runs
 1. Read `docs/KUPPA_CONSTITUTION.md`.

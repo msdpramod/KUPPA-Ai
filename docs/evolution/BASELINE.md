@@ -1,33 +1,36 @@
 # KUPPA Known-Good Baseline
 
 ## Runtime baseline
-- **Current validated commit:** `33ad4d0b1c76bf7886f33d165b5fee1a4da989b3`
-- **CI:** GitHub Actions CI run #113 — completed successfully, including full Maven Test for session-scoped continuity recovery.
-- **Previous validated runtime:** `74ef76ee8624b4d6df256311d13ce15455646556` (CI run #111 green; correlation-keyed persistence and server-side parent restoration).
-- **Previous avatar continuity runtime:** `7ac2b7f2b879ce5f1962e610ab9433c57230e4f7` (CI run #109 green; explicit Vayu v3 avatar continuity controls).
+- **Current validated commit:** `a2adb3b89cc1dad11be4ef2f20ccff6fb70494b7`
+- **CI:** GitHub Actions CI run #115 — completed successfully on implementation commit `a4c9171eda1e6f6035e9f35ae766defab26b2aba`, including the full Maven Test step; merge commit has the identical validated tree.
+- **Previous validated runtime:** `33ad4d0b1c76bf7886f33d165b5fee1a4da989b3` (CI run #113 green; session-scoped continuity recovery).
+- **Previous server continuity runtime:** `74ef76ee8624b4d6df256311d13ce15455646556` (CI run #111 green; correlation-keyed persistence and server-side parent restoration).
 
 ## Current evidence
-- Spring/Java CI is green on session-scoped continuity recovery.
-- `chat_messages` persists nullable `correlationId`, `turnMode`, `parentCorrelationId`, and `clientSessionId` metadata.
-- Same-browser refresh can recover the latest completed resumable correlation ID through metadata-only `GET /api/chat/resumable` and re-enable explicit Continue/Correct controls.
-- The recovery API returns no transcript text; invalid/unknown sessions fall back to unavailable without fabricating continuity.
-- Cancelled Vayu turns are excluded from session recovery.
+- Spring/Java CI is green on signed continuity-session hardening.
+- Existing session-scoped metadata recovery remains backward compatible.
+- A new additive secure continuity path uses server-generated session IDs plus expiring HMAC-SHA256 possession credentials.
+- Secure issuance/lookup fails closed when `KUPPA_CONTINUITY_SIGNING_SECRET` is absent/weak, a token is malformed/tampered, a different session ID is supplied, or the token is expired.
+- The signing secret is environment-only; no secret is committed.
+- Secure recovery still returns only resumable metadata and does not expose transcript text, persona memory, actions, or tool output.
+- The signed continuity credential is not treated as owner authentication; cross-device/cloud owner identity remains future work.
 - `VayuBrainGateway v3`, server-side parent restoration, cancellation, stale-result suppression, approval gates, confidence-aware memory, avatar state engine, voice barge-in, and degraded brain presence remain intact.
 - No aggregate production telemetry exists yet for continuity success, memory accuracy, Vayu latency, voice reliability, UI latency, or resource use.
 
 ## Scorecard baseline
 | Dimension | Evidence status |
 |---|---|
-| Build stability | Green on CI run #113 |
-| Conversation quality | Same-browser resumable parent recovery + server parent restoration; no aggregate metric |
+| Build stability | Green on CI run #115 |
+| Conversation quality | Existing resumable continuity unchanged; secure session path is additive |
 | Personality consistency | Unchanged |
 | Memory accuracy | Existing automated tests; unchanged |
-| Vayu handoff reliability/latency | v3 correlation, cancellation, persisted parent lookup; no aggregate metric |
-| Errors | Invalid/unknown session safe fallback plus existing missing-parent/provider fallbacks tested |
+| Vayu handoff reliability/latency | v3 correlation/cancellation/persisted parent lookup unchanged |
+| Errors | Signed session fail-closed paths plus existing continuity/provider fallbacks tested |
 | Voice reliability | Existing playback cancellation/fallback unchanged |
-| UI responsiveness | Existing avatar-first controls now restore after refresh |
-| Accessibility | Existing live regions/controls preserved; hidden guidance updated |
-| Resource usage | No new dependency; one nullable column/index and one bounded metadata lookup |
+| UI responsiveness | Current avatar behavior unchanged; secure-session UI migration pending |
+| Accessibility | Unchanged |
+| Resource usage | No new dependency or database schema; HMAC verification only on secure continuity operations |
+| Security boundary | Browser session ID only -> additive server-verifiable possession credential available |
 
 ## Rollback policy
-For session-scoped continuity recovery, return to `74ef76ee8624b4d6df256311d13ce15455646556` (CI #111 green). The added `clientSessionId` column/index are nullable/additive and remain backward compatible with the previous runtime. Normal evolution must preserve the KUPPA Constitution and approval gates.
+For signed continuity-session hardening, return to `33ad4d0b1c76bf7886f33d165b5fee1a4da989b3` (CI #113 green). The new secure endpoints/configuration are additive and schema-free, so rollback does not require database migration. Normal evolution must preserve the KUPPA Constitution and approval gates.
