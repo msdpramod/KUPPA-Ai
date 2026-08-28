@@ -4,7 +4,7 @@
 Introduce an explicit owner/device trust boundary before KUPPA is moved to an always-running shared/cloud environment. Hypothesis: requiring owner enrollment before issuing a device credential, then requiring that device credential before issuing a continuity session, materially reduces the chance that browser/session possession is mistaken for owner identity while preserving current clients.
 
 ## Architectural context
-KUPPA remains the HEART and owns identity, trust, relationship continuity, personal-context presentation, voice/avatar presence, and the continuity interface. Vayu remains the BRAIN and owns reasoning, planning, orchestration, knowledge retrieval/freshness, tool/agent selection, execution strategy, and self-healing. The previous runtime baseline is `a2adb3b89cc1dad11be4ef2f20ccff6fb70494b7`; CI #115 was green on the signed continuity-session implementation. The previous scorecard explicitly identified owner/device identity as the next cloud-continuity gap.
+KUPPA remains the HEART and owns identity, trust, relationship continuity, personal-context presentation, voice/avatar presence, and the continuity interface. Vayu remains the BRAIN and owns reasoning, planning, orchestration, knowledge retrieval/freshness, tool/agent selection, execution strategy, and self-healing. The previous runtime baseline was `a2adb3b89cc1dad11be4ef2f20ccff6fb70494b7`; CI #115 was green on the signed continuity-session implementation. The previous scorecard explicitly identified owner/device identity as the next cloud-continuity gap.
 
 ## Detailed changes
 - Added `OwnerDeviceIdentityService` with environment-configured owner id, strong enrollment secret requirement, random device IDs, expiring `v1` HMAC-SHA256 device tokens, constant-time secret/signature comparison, and fail-closed validation.
@@ -29,17 +29,17 @@ KUPPA HEART gains only an identity/trust primitive. Vayu BRAIN is untouched. No 
 ## API/config/schema changes
 New APIs: `POST /api/chat/owner/device`; `POST /api/chat/session/owner`. New headers: `X-KUPPA-Owner-Enroll-Key`; `X-KUPPA-Device-Token`. New config: `KUPPA_OWNER_ID`, `KUPPA_OWNER_ENROLLMENT_SECRET`, `KUPPA_DEVICE_TOKEN_TTL_SECONDS`. Database schema changes: none. Runtime dependencies: none.
 
-## Validation
-Pre-promotion candidate validation is defined by the focused `OwnerDeviceIdentityServiceTest` plus the complete existing Maven test suite in GitHub Actions. The candidate must not be merged/promoted unless CI is green. A follow-up same-cycle validation record will capture the actual workflow run and update the known-good baseline after CI completes.
+## Tests/build/lint/smoke checks
+GitHub Actions CI run #118 completed successfully for implementation commit `46fd36cdf88e6441e56fc41c63e181ef64dc0d6c`. Checkout and Java setup succeeded and the full Maven `Test` step succeeded. Focused tests exercise successful enrollment plus wrong secret, wrong device/tampering, expiry, weak configuration, and label normalization. Existing project tests also remained green. No browser/UI code changed, so no separate UI lint/screenshot check was required for this Heart-cycle backend boundary.
 
 ## Before/after metrics
-Owner-authenticated device credential paths: 0 -> 1. Owner-gated continuity issuance paths: 0 -> 1. New runtime dependencies: 0. Database schema changes: 0. Vayu cognition changes: 0. Approval-gate changes: 0. Existing client breakage intended: 0.
+Owner-enrolled device credential paths: 0 -> 1. Owner-gated continuity issuance paths: 0 -> 1. Focused device-identity tests: 0 -> 6. New runtime dependencies: 0. Database schema changes: 0. Vayu cognition changes: 0. Approval-gate changes: 0. Build stability: green (#115) -> green (#118).
 
 ## Security/privacy/permission implications
 The enrollment secret is never committed and must be at least 32 bytes. Device tokens are expiring possession credentials; they are not hardware attestation and should not be described as such. Rotating the owner enrollment secret invalidates all outstanding device tokens. Consequential external actions remain approval-gated and unchanged.
 
-## Failure/fallback paths
-Weak/missing owner secret disables enrollment. Wrong enrollment secret returns unauthorized. Malformed, tampered, expired, or wrong-device tokens fail validation. If continuity signing is disabled, owner-authenticated continuity issuance returns service unavailable. Existing continuity APIs remain available exactly as before for backward compatibility.
+## Failure/fallback paths tested
+Weak/missing owner secret disables enrollment. Wrong enrollment secret is rejected. Malformed, tampered, expired, or wrong-device tokens fail validation. If continuity signing is disabled, owner-authenticated continuity issuance is unavailable. Existing continuity APIs remain available exactly as before for backward compatibility.
 
 ## Known limitations
 No device revocation list, hardware-bound keys, OIDC/OAuth, multi-owner model, or cross-device transcript discovery is added. The same enrollment secret currently signs device tokens; secret separation can be introduced later if operational needs justify it. The avatar does not yet use the owner-authenticated path.
@@ -53,5 +53,5 @@ The backward-compatible direct `/api/chat/session` path remains weaker than owne
 ## Dependencies
 JDK/Spring/JCA already present in the repository; no new library dependency.
 
-## Follow-up work / next target
-After CI validation, migrate the avatar to enroll/use owner-authorized device continuity with graceful degradation, then add revocation/rotation and true cross-device owner continuity without exposing transcript text.
+## Follow-up work / next evolution target
+Migrate the avatar to enroll/use owner-authorized device continuity with graceful degradation, then add revocation/rotation and true cross-device owner continuity without exposing transcript text.
