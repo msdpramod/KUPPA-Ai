@@ -44,3 +44,7 @@ kuppa:
   continuity:
     signing-secret: ${KUPPA_CONTINUITY_SIGNING_SECRET:}
     session-ttl-seconds: ${KUPPA_CONTINUITY_SESSION_TTL_SECONDS:2592000}
+  identity:
+    owner-id: ${KUPPA_OWNER_ID:owner}
+    enrollment-secret: ${KUPPA_OWNER_ENROLLMENT_SECRET:}
+    device-token-ttl-seconds: ${KUPPA_DEVICE_TOKEN_TTL_SECONDS:7776000}

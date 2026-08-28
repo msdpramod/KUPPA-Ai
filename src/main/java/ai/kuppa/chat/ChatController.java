@@ -14,14 +14,17 @@ public class ChatController {
     private final VayuBrainGateway brainGateway;
     private final ChatContinuityService continuityService;
     private final ContinuitySessionService continuitySessionService;
+    private final OwnerDeviceIdentityService ownerDeviceIdentityService;
 
     public ChatController(ChatService service, VayuBrainGateway brainGateway,
                           ChatContinuityService continuityService,
-                          ContinuitySessionService continuitySessionService) {
+                          ContinuitySessionService continuitySessionService,
+                          OwnerDeviceIdentityService ownerDeviceIdentityService) {
         this.service = service;
         this.brainGateway = brainGateway;
         this.continuityService = continuityService;
         this.continuitySessionService = continuitySessionService;
+        this.ownerDeviceIdentityService = ownerDeviceIdentityService;
     }
 
     @PostMapping
@@ -42,6 +45,47 @@ public class ChatController {
                     "Secure continuity sessions require KUPPA_CONTINUITY_SIGNING_SECRET");
         }
         return continuitySessionService.issue();
+    }
+
+    @PostMapping("/owner/device")
+    public OwnerDeviceIdentityService.DeviceCredential enrollOwnerDevice(
+            @RequestHeader(value = "X-KUPPA-Owner-Enroll-Key", required = false) String enrollmentKey,
+            @RequestBody(required = false) DeviceEnrollmentRequest request) {
+        if (!ownerDeviceIdentityService.enabled()) {
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Owner device enrollment requires KUPPA_OWNER_ENROLLMENT_SECRET");
+        }
+        try {
+            return ownerDeviceIdentityService.enroll(
+                    enrollmentKey,
+                    request == null ? null : request.deviceLabel());
+        } catch (SecurityException ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Owner enrollment credential rejected");
+        }
+    }
+
+    @PostMapping("/session/owner")
+    public OwnerContinuityCredential createOwnerContinuitySession(
+            @RequestParam String deviceId,
+            @RequestHeader(value = "X-KUPPA-Device-Token", required = false) String deviceToken) {
+        if (!ownerDeviceIdentityService.enabled()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Owner device identity is disabled");
+        }
+        if (!ownerDeviceIdentityService.validate(deviceId, deviceToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired owner device credential");
+        }
+        if (!continuitySessionService.enabled()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Secure continuity sessions are disabled");
+        }
+
+        ContinuitySessionService.SessionCredential session = continuitySessionService.issue();
+        return new OwnerContinuityCredential(
+                ownerDeviceIdentityService.ownerId(),
+                deviceId,
+                session.clientSessionId(),
+                session.token(),
+                session.expiresAt());
     }
 
     @GetMapping("/resumable")
@@ -73,4 +117,13 @@ public class ChatController {
             String turnMode,
             String parentCorrelationId,
             String clientSessionId) {}
+
+    public record DeviceEnrollmentRequest(String deviceLabel) {}
+
+    public record OwnerContinuityCredential(
+            String ownerId,
+            String deviceId,
+            String clientSessionId,
+            String continuityToken,
+            java.time.Instant expiresAt) {}
 }
