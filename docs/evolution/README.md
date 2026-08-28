@@ -29,7 +29,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-27 16:40 Heart | `2026/08/2026-08-27-1640-signed-continuity-session-validation.md` | `b8d0888cc2d8f5ffae7b95b8ff92e9919628a071` | Documentation-only CI closeout and baseline promotion |
 | 2026-08-28 03:00 Heart | `2026/08/2026-08-28-0300-owner-device-trust-boundary.md` | `46fd36cdf88e6441e56fc41c63e181ef64dc0d6c` | Owner-enrolled device credential + owner-gated continuity issuance; CI #118 green |
 | 2026-08-28 03:10 Heart | `2026/08/2026-08-28-0310-owner-device-validation.md` | validation closeout | Documentation-only CI closeout and baseline promotion |
-| 2026-08-29 03:00 Heart | `2026/08/2026-08-29-0300-device-signing-key-rotation.md` | pending validation | Dedicated device-token signing key + previous-key rotation window; not promoted until CI green |
+| 2026-08-29 03:00 Heart | `2026/08/2026-08-29-0300-device-signing-key-rotation.md` | `b88adffb3bd44985bb38feb40c868050aaba70bf` | Dedicated device-token signing key + previous-key rotation window; CI #121 green; promoted via `cbc3a5c8583e142efd2eb5a197b2db3d9983b5a5` |
+| 2026-08-29 03:10 Heart | `2026/08/2026-08-29-0310-device-signing-key-validation.md` | validation closeout | Documentation-only CI closeout and baseline promotion |
 
 ## Required preflight for future runs
 1. Read `docs/KUPPA_CONSTITUTION.md`.
