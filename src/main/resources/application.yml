@@ -47,4 +47,6 @@ kuppa:
   identity:
     owner-id: ${KUPPA_OWNER_ID:owner}
     enrollment-secret: ${KUPPA_OWNER_ENROLLMENT_SECRET:}
+    device-signing-secret: ${KUPPA_DEVICE_SIGNING_SECRET:}
+    previous-device-signing-secret: ${KUPPA_DEVICE_PREVIOUS_SIGNING_SECRET:}
     device-token-ttl-seconds: ${KUPPA_DEVICE_TOKEN_TTL_SECONDS:7776000}

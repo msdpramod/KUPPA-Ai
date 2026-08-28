@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-08-29
+### Changed
+- Added optional dedicated `KUPPA_DEVICE_SIGNING_SECRET` for new `v2` owner-device credentials.
+- Added `KUPPA_DEVICE_PREVIOUS_SIGNING_SECRET` so planned signing-key rotation can accept the immediately previous strong key during a bounded overlap window.
+- Preserved legacy `v1` device-token issuance when no dedicated signing key is configured and preserved validation of existing v1 credentials during migration.
+- Added additive `tokenVersion` metadata to device enrollment responses and focused rotation/migration failure-path tests.
+
+### Safety
+- Weak or structurally incomplete dedicated-signing configuration fails closed.
+- Enrollment authentication and device-token signing are now separable without changing Vayu cognition or consequential-action approval gates.
+- Existing v1 credentials remain possession credentials and are accepted only until their normal expiry unless the enrollment secret is rotated.
+- No secrets, new runtime dependencies, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
+
 ## 2026-08-28
 ### Changed
 - Added an owner-enrolled device credential boundary for cloud-ready continuity hardening.
