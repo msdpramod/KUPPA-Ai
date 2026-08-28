@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-08-28
+### Changed
+- Added an owner-enrolled device credential boundary for cloud-ready continuity hardening.
+- Added `POST /api/chat/owner/device` for expiring signed device credentials and `POST /api/chat/session/owner` for owner-gated continuity-session issuance.
+- Added environment-only owner identity configuration and focused failure-path tests.
+
+### Safety
+- Device credentials are possession credentials, not hardware attestation or complete owner authentication.
+- KUPPA gains only an identity/trust primitive; Vayu remains the reasoning/orchestration BRAIN.
+- Existing continuity APIs remain backward compatible and are not relabeled as owner-authenticated.
+- Consequential external/high-impact action approval flow remains unchanged.
+- No secrets, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
+
 ## 2026-08-27
 ### Changed
 - Persisted Vayu `correlationId`, `turnMode`, and `parentCorrelationId` with chat messages so explicit continuation/correction context can survive browser-local state loss.
@@ -44,7 +57,7 @@
 ### Safety
 - Cancellation changes only Vayu brain-turn lifecycle; it does not grant KUPPA reasoning, provider-routing, tool, or execution authority.
 - Consequential external/high-impact action approval flow remains unchanged.
-- No secrets, new external destinations, unrestricted shell execution, self-modification, or autonomous external actions were introduced.
+- No secrets, new external destinations, unrestricted shell execution, self-modification, or autonomous consequential actions were introduced.
 
 ## 2026-08-24
 ### Changed
