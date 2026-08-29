@@ -15,16 +15,19 @@ public class ChatController {
     private final ChatContinuityService continuityService;
     private final ContinuitySessionService continuitySessionService;
     private final OwnerDeviceIdentityService ownerDeviceIdentityService;
+    private final OwnerDeviceTrustService ownerDeviceTrustService;
 
     public ChatController(ChatService service, VayuBrainGateway brainGateway,
                           ChatContinuityService continuityService,
                           ContinuitySessionService continuitySessionService,
-                          OwnerDeviceIdentityService ownerDeviceIdentityService) {
+                          OwnerDeviceIdentityService ownerDeviceIdentityService,
+                          OwnerDeviceTrustService ownerDeviceTrustService) {
         this.service = service;
         this.brainGateway = brainGateway;
         this.continuityService = continuityService;
         this.continuitySessionService = continuitySessionService;
         this.ownerDeviceIdentityService = ownerDeviceIdentityService;
+        this.ownerDeviceTrustService = ownerDeviceTrustService;
     }
 
     @PostMapping
@@ -57,29 +60,45 @@ public class ChatController {
                     "Owner device enrollment requires KUPPA_OWNER_ENROLLMENT_SECRET");
         }
         try {
-            return ownerDeviceIdentityService.enroll(
+            OwnerDeviceIdentityService.DeviceCredential credential = ownerDeviceIdentityService.enroll(
                     enrollmentKey,
                     request == null ? null : request.deviceLabel());
+            ownerDeviceTrustService.register(credential);
+            return credential;
         } catch (SecurityException ex) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Owner enrollment credential rejected");
         }
+    }
+
+    @PostMapping("/owner/device/revoke")
+    public DeviceRevocation revokeOwnerDevice(
+            @RequestParam String deviceId,
+            @RequestHeader(value = "X-KUPPA-Device-Token", required = false) String deviceToken) {
+        requireValidDeviceCredential(deviceId, deviceToken);
+        boolean revoked = ownerDeviceTrustService.revoke(ownerDeviceIdentityService.ownerId(), deviceId);
+        if (!revoked) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Owner device is not active");
+        }
+        return new DeviceRevocation(deviceId, true);
     }
 
     @PostMapping("/session/owner")
     public OwnerContinuityCredential createOwnerContinuitySession(
             @RequestParam String deviceId,
             @RequestHeader(value = "X-KUPPA-Device-Token", required = false) String deviceToken) {
-        if (!ownerDeviceIdentityService.enabled()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Owner device identity is disabled");
-        }
-        if (!ownerDeviceIdentityService.validate(deviceId, deviceToken)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired owner device credential");
+        requireValidDeviceCredential(deviceId, deviceToken);
+        if (!ownerDeviceTrustService.authorizeValidatedCredential(
+                ownerDeviceIdentityService.ownerId(), deviceId, deviceToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Owner device is revoked");
         }
         if (!continuitySessionService.enabled()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Secure continuity sessions are disabled");
         }
 
         ContinuitySessionService.SessionCredential session = continuitySessionService.issue();
+        if (!ownerDeviceTrustService.recordContinuityIssue(ownerDeviceIdentityService.ownerId(), deviceId)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Owner device is no longer active");
+        }
         return new OwnerContinuityCredential(
                 ownerDeviceIdentityService.ownerId(),
                 deviceId,
@@ -111,6 +130,15 @@ public class ChatController {
         return brainGateway.cancel(correlationId);
     }
 
+    private void requireValidDeviceCredential(String deviceId, String deviceToken) {
+        if (!ownerDeviceIdentityService.enabled()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Owner device identity is disabled");
+        }
+        if (!ownerDeviceIdentityService.validate(deviceId, deviceToken)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired owner device credential");
+        }
+    }
+
     public record ChatRequest(
             @NotBlank String message,
             String correlationId,
@@ -119,6 +147,8 @@ public class ChatController {
             String clientSessionId) {}
 
     public record DeviceEnrollmentRequest(String deviceLabel) {}
+
+    public record DeviceRevocation(String deviceId, boolean revoked) {}
 
     public record OwnerContinuityCredential(
             String ownerId,
