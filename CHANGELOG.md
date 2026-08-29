@@ -2,6 +2,9 @@
 
 ## 2026-08-29
 ### Changed
+- Added persistent owner-device trust records so cryptographically valid possession tokens can be revoked per device before expiry.
+- Added `POST /api/chat/owner/device/revoke`, backward-compatible migration for pre-registry valid device credentials, and per-device continuity issuance audit fields.
+- Owner continuity now requires both HMAC/device-token validity and active persistent device trust.
 - Migrated the avatar-first continuity UI toward owner-device-authorized signed continuity while retaining graceful browser-local fallback.
 - Added visible `Continuity · trusted device` / `Continuity · local` state plus explicit Trust/Forget device controls.
 - The avatar now consumes existing owner enrollment, owner-authorized session issuance, and secure resumable-turn APIs, with one bounded continuity-token renewal retry.
@@ -11,6 +14,8 @@
 - Added additive `tokenVersion` metadata to device enrollment responses and focused rotation/migration failure-path tests.
 
 ### Safety
+- Per-device revocation supplements cryptographic validation; a revoked persistent record cannot be reactivated by the legacy migration path.
+- Existing pre-registry credentials migrate only after their signed token has already passed cryptographic validation.
 - The owner enrollment key is sent only for explicit enrollment and is not persisted by the avatar UI; issued possession credentials remain browser-stored and are not hardware attestation.
 - Invalid/expired device credentials clear trusted-device state and fall back locally rather than fabricating trust.
 - Weak or structurally incomplete dedicated-signing configuration fails closed.
