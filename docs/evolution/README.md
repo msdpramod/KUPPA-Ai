@@ -31,6 +31,7 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-28 03:10 Heart | `2026/08/2026-08-28-0310-owner-device-validation.md` | validation closeout | Documentation-only CI closeout and baseline promotion |
 | 2026-08-29 03:00 Heart | `2026/08/2026-08-29-0300-device-signing-key-rotation.md` | `b88adffb3bd44985bb38feb40c868050aaba70bf` | Dedicated device-token signing key + previous-key rotation window; CI #121 green; promoted via `cbc3a5c8583e142efd2eb5a197b2db3d9983b5a5` |
 | 2026-08-29 03:10 Heart | `2026/08/2026-08-29-0310-device-signing-key-validation.md` | validation closeout | Documentation-only CI closeout and baseline promotion |
+| 2026-08-29 15:00 UI | `2026/08/2026-08-29-1500-owner-device-continuity-ui.md` | implementation commit pending validation | Avatar consumes owner-device authorized signed continuity with visible local fallback; promotion requires green CI |
 
 ## Required preflight for future runs
 1. Read `docs/KUPPA_CONSTITUTION.md`.
