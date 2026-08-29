@@ -75,9 +75,33 @@ class AvatarBrainPresenceContractTest {
         assertTrue(html.contains("localStorage.getItem"));
         assertTrue(html.contains("clientSessionId:clientSessionId"));
         assertTrue(html.contains("/api/chat/resumable?clientSessionId="));
-        assertTrue(html.contains("function restoreContinuity()"));
+        assertTrue(html.contains("function restoreContinuity"));
         assertTrue(html.contains("kuppa-continuity-restored"));
         assertTrue(html.contains("lastCompletedCorrelationId=data.correlationId"));
+    }
+
+    @Test
+    void avatarUiPrefersOwnerDeviceAuthorizedSignedContinuityWithLocalFallback() throws IOException {
+        String html = resource("/static/index.html");
+        assertTrue(html.contains("kuppa.ownerDeviceId.v1"));
+        assertTrue(html.contains("kuppa.ownerDeviceToken.v1"));
+        assertTrue(html.contains("kuppa.continuityToken.v1"));
+        assertTrue(html.contains("/api/chat/owner/device"));
+        assertTrue(html.contains("X-KUPPA-Owner-Enroll-Key"));
+        assertTrue(html.contains("/api/chat/session/owner?deviceId="));
+        assertTrue(html.contains("X-KUPPA-Device-Token"));
+        assertTrue(html.contains("/api/chat/resumable/secure?clientSessionId="));
+        assertTrue(html.contains("X-KUPPA-Continuity-Token"));
+        assertTrue(html.contains("function issueOwnerContinuity()"));
+        assertTrue(html.contains("function enrollOwnerDevice()"));
+        assertTrue(html.contains("function forgetOwnerDevice()"));
+        assertTrue(html.contains("function bootstrapContinuity()"));
+        assertTrue(html.contains("Continuity · trusted device"));
+        assertTrue(html.contains("Continuity · local"));
+        assertTrue(html.contains("retry&&await issueOwnerContinuity()"));
+        assertTrue(html.contains("safeSet(OWNER_DEVICE_TOKEN_KEY,data.token)"));
+        assertTrue(html.contains("enrollment key for this device. It is sent once and is not saved by the browser"));
+        assertTrue(html.contains("PENDING_APPROVAL"));
     }
 
     private String resource(String path) throws IOException {
