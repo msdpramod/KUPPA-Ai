@@ -17,10 +17,6 @@ public class OwnerManagementAuthService {
         this.managementSecret = bytes(managementSecret);
     }
 
-    OwnerManagementAuthService(String managementSecret) {
-        this.managementSecret = bytes(managementSecret);
-    }
-
     public boolean enabled() {
         return managementSecret.length >= MIN_SECRET_LENGTH;
     }
