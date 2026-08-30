@@ -35,6 +35,9 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-29 15:10 UI | `2026/08/2026-08-29-1510-owner-device-continuity-validation.md` | validation closeout | Documentation-only CI closeout and baseline promotion |
 | 2026-08-29 16:30 Heart | `2026/08/2026-08-29-1630-persistent-owner-device-revocation.md` | `93e59e784eb4ea0b30a8b0021895975da088f3b5` | Persistent owner-device trust + individual revocation + issuance audit; CI #128 green |
 | 2026-08-29 16:40 Heart | `2026/08/2026-08-29-1640-persistent-owner-device-revocation-validation.md` | validation closeout | Documentation-only CI closeout and baseline promotion |
+| 2026-08-30 03:00 Heart | `2026/08/2026-08-30-0300-owner-device-management-boundary.md` | `5cfc129274addf813f38af555f9931a13d61010c` | Owner-wide metadata inventory + remote lost-device revocation; CI #131 caught compile regression before promotion |
+| 2026-08-30 03:10 Heart | `2026/08/2026-08-30-0310-owner-management-constructor-fix.md` | `c726f7fef6f9fccb5709ec7e741d41f11a1264ad` | Duplicate constructor removed; full Maven CI #132 green |
+| 2026-08-30 03:20 Heart | `2026/08/2026-08-30-0320-owner-device-management-validation.md` | validation closeout | Documentation-only closeout; baseline promoted after CI #132 |
 
 ## Required preflight for future runs
 1. Read `docs/KUPPA_CONSTITUTION.md`.

@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/chat")
 public class ChatController {
@@ -16,18 +18,21 @@ public class ChatController {
     private final ContinuitySessionService continuitySessionService;
     private final OwnerDeviceIdentityService ownerDeviceIdentityService;
     private final OwnerDeviceTrustService ownerDeviceTrustService;
+    private final OwnerManagementAuthService ownerManagementAuthService;
 
     public ChatController(ChatService service, VayuBrainGateway brainGateway,
                           ChatContinuityService continuityService,
                           ContinuitySessionService continuitySessionService,
                           OwnerDeviceIdentityService ownerDeviceIdentityService,
-                          OwnerDeviceTrustService ownerDeviceTrustService) {
+                          OwnerDeviceTrustService ownerDeviceTrustService,
+                          OwnerManagementAuthService ownerManagementAuthService) {
         this.service = service;
         this.brainGateway = brainGateway;
         this.continuityService = continuityService;
         this.continuitySessionService = continuitySessionService;
         this.ownerDeviceIdentityService = ownerDeviceIdentityService;
         this.ownerDeviceTrustService = ownerDeviceTrustService;
+        this.ownerManagementAuthService = ownerManagementAuthService;
     }
 
     @PostMapping
@@ -80,6 +85,26 @@ public class ChatController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Owner device is not active");
         }
         return new DeviceRevocation(deviceId, true);
+    }
+
+    @GetMapping("/owner/devices")
+    public List<OwnerDeviceTrustService.DeviceSummary> ownerDevices(
+            @RequestHeader(value = "X-KUPPA-Owner-Management-Key", required = false) String managementKey) {
+        requireOwnerManagement(managementKey);
+        return ownerDeviceTrustService.inventory(ownerDeviceIdentityService.ownerId());
+    }
+
+    @PostMapping("/owner/devices/{deviceId}/revoke")
+    public OwnerDeviceTrustService.DeviceSummary remotelyRevokeOwnerDevice(
+            @PathVariable String deviceId,
+            @RequestHeader(value = "X-KUPPA-Owner-Management-Key", required = false) String managementKey) {
+        requireOwnerManagement(managementKey);
+        OwnerDeviceTrustService.DeviceSummary summary = ownerDeviceTrustService.remoteRevoke(
+                ownerDeviceIdentityService.ownerId(), deviceId);
+        if (summary == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner device not found");
+        }
+        return summary;
     }
 
     @PostMapping("/session/owner")
@@ -136,6 +161,17 @@ public class ChatController {
         }
         if (!ownerDeviceIdentityService.validate(deviceId, deviceToken)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired owner device credential");
+        }
+    }
+
+    private void requireOwnerManagement(String managementKey) {
+        if (!ownerManagementAuthService.enabled()) {
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Owner device management requires KUPPA_OWNER_MANAGEMENT_SECRET");
+        }
+        if (!ownerManagementAuthService.authorize(managementKey)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Owner management credential rejected");
         }
     }
 
