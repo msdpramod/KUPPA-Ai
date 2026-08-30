@@ -1,5 +1,6 @@
 package ai.kuppa.chat;
 
+import ai.kuppa.audit.AuditService;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
@@ -73,6 +74,38 @@ class OwnerDeviceTrustServiceTest {
         assertFalse(service.authorizeValidatedCredential("different-owner", "device-3", "v2.999.signature"));
         assertFalse(service.recordContinuityIssue("different-owner", "device-3"));
         assertFalse(service.revoke("different-owner", "device-3"));
+    }
+
+    @Test
+    void remoteRevocationWritesSanitizedAuditEvent() {
+        OwnerDeviceTrustRepository repository = mock(OwnerDeviceTrustRepository.class);
+        AuditService auditService = mock(AuditService.class);
+        OwnerDeviceTrust trust = activeTrust("lost-device");
+        when(repository.findById("lost-device")).thenReturn(Optional.of(trust));
+        when(repository.save(any(OwnerDeviceTrust.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        OwnerDeviceTrustService service = new OwnerDeviceTrustService(
+                repository, Clock.fixed(NOW, ZoneOffset.UTC), auditService);
+
+        OwnerDeviceTrustService.DeviceSummary summary = service.remoteRevoke("owner", "lost-device");
+
+        assertNotNull(summary);
+        assertFalse(summary.active());
+        verify(auditService).record(
+                "OWNER_DEVICE_REVOKED_REMOTE",
+                "lost-device",
+                "actor=OWNER_MANAGEMENT;reason=REMOTE_REVOCATION");
+    }
+
+    @Test
+    void failedCrossOwnerRemoteRevocationDoesNotWriteAuditEvent() {
+        OwnerDeviceTrustRepository repository = mock(OwnerDeviceTrustRepository.class);
+        AuditService auditService = mock(AuditService.class);
+        when(repository.findById("device-4")).thenReturn(Optional.of(activeTrust("device-4")));
+        OwnerDeviceTrustService service = new OwnerDeviceTrustService(
+                repository, Clock.fixed(NOW, ZoneOffset.UTC), auditService);
+
+        assertNull(service.remoteRevoke("different-owner", "device-4"));
+        verifyNoInteractions(auditService);
     }
 
     private OwnerDeviceTrust activeTrust(String deviceId) {

@@ -1,5 +1,6 @@
 package ai.kuppa.chat;
 
+import ai.kuppa.audit.AuditService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,14 +12,20 @@ import java.util.List;
 public class OwnerDeviceTrustService {
     private final OwnerDeviceTrustRepository repository;
     private final Clock clock;
+    private final AuditService auditService;
 
-    public OwnerDeviceTrustService(OwnerDeviceTrustRepository repository) {
-        this(repository, Clock.systemUTC());
+    public OwnerDeviceTrustService(OwnerDeviceTrustRepository repository, AuditService auditService) {
+        this(repository, Clock.systemUTC(), auditService);
     }
 
     OwnerDeviceTrustService(OwnerDeviceTrustRepository repository, Clock clock) {
+        this(repository, clock, null);
+    }
+
+    OwnerDeviceTrustService(OwnerDeviceTrustRepository repository, Clock clock, AuditService auditService) {
         this.repository = repository;
         this.clock = clock;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -29,7 +36,9 @@ public class OwnerDeviceTrustService {
                 credential.deviceLabel(),
                 credential.tokenVersion(),
                 clock.instant());
-        return repository.save(trust);
+        OwnerDeviceTrust saved = repository.save(trust);
+        audit("OWNER_DEVICE_ENROLLED", credential.deviceId(), "OWNER_ENROLLMENT", "EXPLICIT_ENROLLMENT");
+        return saved;
     }
 
     @Transactional(readOnly = true)
@@ -56,6 +65,7 @@ public class OwnerDeviceTrustService {
                 tokenVersion(token),
                 clock.instant());
         repository.save(migrated);
+        audit("OWNER_DEVICE_MIGRATED", deviceId, "MIGRATION", "FIRST_VALIDATED_USE");
         return true;
     }
 
@@ -65,6 +75,7 @@ public class OwnerDeviceTrustService {
         if (trust == null || !trust.isActiveFor(ownerId)) return false;
         trust.markContinuityIssued(clock.instant());
         repository.save(trust);
+        audit("OWNER_DEVICE_CONTINUITY_ISSUED", deviceId, "DEVICE_POSSESSION", "OWNER_CONTINUITY_SESSION");
         return true;
     }
 
@@ -74,6 +85,7 @@ public class OwnerDeviceTrustService {
         if (trust == null || !trust.isActiveFor(ownerId)) return false;
         trust.revoke(clock.instant());
         repository.save(trust);
+        audit("OWNER_DEVICE_REVOKED_SELF", deviceId, "DEVICE_SELF", "SELF_REVOCATION");
         return true;
     }
 
@@ -84,7 +96,13 @@ public class OwnerDeviceTrustService {
         if (trust == null || !ownerId.equals(trust.getOwnerId())) return null;
         trust.revoke(clock.instant());
         repository.save(trust);
+        audit("OWNER_DEVICE_REVOKED_REMOTE", deviceId, "OWNER_MANAGEMENT", "REMOTE_REVOCATION");
         return summary(trust);
+    }
+
+    private void audit(String eventType, String deviceId, String actor, String reason) {
+        if (auditService == null) return;
+        auditService.record(eventType, deviceId, "actor=" + actor + ";reason=" + reason);
     }
 
     private DeviceSummary summary(OwnerDeviceTrust trust) {
