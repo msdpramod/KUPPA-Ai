@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-08-30
+### Changed
+- Added a distinct owner-management authentication boundary for trusted-device administration using environment-only `KUPPA_OWNER_MANAGEMENT_SECRET`.
+- Added metadata-only `GET /api/chat/owner/devices` for owner-scoped trusted-device inventory.
+- Added `POST /api/chat/owner/devices/{deviceId}/revoke` so a lost device can be revoked without possessing its bearer token.
+- Preserved existing device-token self-revocation, continuity behavior, Vayu Brain Gateway v3, persona memory, avatar interaction, voice behavior and approval gates.
+- Added focused tests for management-secret strength/matching, inventory metadata, owner scoping, repeat revocation and remote lost-device revocation.
+- CI #131 blocked an initial duplicate-constructor compilation regression; repair commit `c726f7f...` passed full Maven CI #132 before promotion.
+
+### Safety
+- Owner management, enrollment authentication, device-token signing and continuity signing remain separate credentials and can be rotated independently.
+- Trusted-device inventory never returns bearer tokens, enrollment secrets, management secrets or signing material.
+- Weak/missing owner-management configuration and incorrect management credentials fail closed.
+- The management credential remains a shared-secret interim mechanism, not passkey/WebAuthn/OIDC or hardware-bound authentication.
+- No new database schema, runtime dependency, secret in source control, unrestricted shell execution, self-modification or autonomous consequential action was introduced.
+
 ## 2026-08-29
 ### Changed
 - Added persistent owner-device trust records so cryptographically valid possession tokens can be revoked per device before expiry.
