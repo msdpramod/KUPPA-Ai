@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-31
+### Changed
+- Added durable owner-device trust audit events for explicit enrollment, validated legacy migration, owner-continuity issuance, self-revocation, and owner-management remote revocation.
+- Reused the existing `audit_events` table; no new schema or runtime dependency was added.
+- Added focused failure-path coverage proving cross-owner remote revocation does not emit a misleading success audit event.
+
+### Safety
+- New trust audit details contain only bounded actor/reason codes and device identity in the existing audit action-id field; bearer tokens, continuity tokens, enrollment/management secrets and signing material are not recorded.
+- KUPPA remains the HEART and Vayu remains the BRAIN; reasoning, planning, retrieval, provider routing, tool/agent orchestration and execution strategy are unchanged.
+- Consequential external/high-impact action approval behavior is unchanged.
+- CI #135 passed the full Maven test workflow before promotion.
+
 ## 2026-08-30
 ### Changed
 - Added a distinct owner-management authentication boundary for trusted-device administration using environment-only `KUPPA_OWNER_MANAGEMENT_SECRET`.
