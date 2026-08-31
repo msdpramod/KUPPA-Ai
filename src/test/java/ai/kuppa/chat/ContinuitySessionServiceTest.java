@@ -1,7 +1,9 @@
 package ai.kuppa.chat;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.lang.reflect.Constructor;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -11,6 +13,15 @@ import static org.junit.jupiter.api.Assertions.*;
 class ContinuitySessionServiceTest {
     private static final String STRONG_SECRET = "0123456789abcdef0123456789abcdef0123456789abcdef";
     private static final Instant NOW = Instant.parse("2026-08-27T10:30:00Z");
+
+    @Test
+    void springConfigurationConstructorIsExplicitlyAutowired() throws NoSuchMethodException {
+        Constructor<ContinuitySessionService> constructor = ContinuitySessionService.class
+                .getConstructor(String.class, long.class);
+
+        assertTrue(constructor.isAnnotationPresent(Autowired.class),
+                "Spring must explicitly select the configuration constructor because this service has multiple constructors");
+    }
 
     @Test
     void issuesAndValidatesServerSignedSessionCredential() {
