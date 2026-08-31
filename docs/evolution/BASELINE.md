@@ -1,42 +1,41 @@
 # KUPPA Known-Good Baseline
 
 ## Runtime baseline
-- **Current validated implementation:** `0f57af0525ea869a0fc853e51045f25ea2ab85a1` (avatar-first Trusted Devices sheet with metadata-only inventory, local Forget, global Revoke and repaired UI contract), validated by GitHub Actions CI #146.
-- **Previous governed branch head:** `2c46d39716399206ca9d208626f3f57c8f6d0130` (Spring multi-constructor startup-fix documentation head), validated by CI #144.
-- **Previous security/runtime baseline:** `34d762d71b752fcaa88c89b9acc0add6780d7a66` (owner-device trust audit ledger), validated by CI #135.
+- **Current validated implementation:** `2e3f4c2575bba55af3fedec87db6b78253c309f9` (in-app owner-device pairing and management unlock forms replacing native credential prompts), validated by GitHub Actions CI #149.
+- **Previous validated implementation:** `0f57af0525ea869a0fc853e51045f25ea2ab85a1` (avatar-first Trusted Devices sheet with metadata-only inventory, local Forget, global Revoke and repaired UI contract), validated by CI #146.
+- **Pre-change governed branch head:** `11cabca8dbc9ff94dda5e5a37386fce82710f724`.
 
 ## Current evidence
-- The avatar exposes a `Trusted devices` sheet without restoring a conversation window.
-- Inventory is metadata-only: label, token version, enrollment/usage timestamps, continuity count and active/revoked state.
-- `Forget on this browser` clears local possession/continuity state only; `Revoke everywhere` uses the owner-management remote-revocation boundary.
-- The owner-management key is held only in JS memory while the sheet is open and is not written to localStorage.
-- Revoking another device refreshes metadata using the already-entered ephemeral credential without another prompt.
-- Missing/rejected management credentials leave normal conversation usable and do not mutate trust.
-- Persistent revocation, signed continuity, audit ledger, VayuBrainGateway v3, cancellation, parent restoration, confidence-aware memory, state engine, voice barge-in, degraded brain presence, signing-key rotation and consequential-action approvals remain intact.
-- CI #145 rejected an over-broad new contract assertion before promotion; CI #146 passed the repaired runtime.
+- `Pair this device` uses a KUPPA-owned accessible dialog rather than the old owner-enrollment browser prompt.
+- The enrollment key is sent through the existing `X-KUPPA-Owner-Enroll-Key` contract, cleared from the form after use and never stored by the pairing module.
+- Trusted Devices management uses an in-sheet password input; the management key stays page-memory-only while the sheet is open and its input is cleared.
+- Device inventory remains metadata-only and still distinguishes `Forget on this browser` from `Revoke everywhere`.
+- The issued device possession credential remains in localStorage as an acknowledged interim limitation; no stronger security claim is made.
+- Secure continuity bootstrap, local fallback, persistent revocation, signed continuity, audit ledger, VayuBrainGateway v3, cancellation, parent restoration, confidence-aware memory, state engine, voice barge-in, degraded brain presence, signing-key rotation and consequential-action approvals remain intact.
+- CI #149 passed checkout, Java setup, the full Maven `Test` step and cleanup for implementation `2e3f4c...`.
 
 ## Scorecard baseline
 | Dimension | Evidence status |
 |---|---|
-| Build stability | Green on CI #146 after CI #145 regression rejection |
-| Conversation quality | Conversation/avatar flow unchanged; Trusted Devices remains secondary UI |
+| Build stability | Green on CI #149 |
+| Conversation quality | Avatar/conversation flow unchanged; trust UX remains secondary |
 | Personality consistency | Unchanged |
 | Memory accuracy | Existing confidence-aware memory behavior/tests unchanged |
-| Vayu handoff reliability/latency | Vayu Gateway v3 and cancellation/persisted parent lookup unchanged |
-| Errors | Management/auth failures are bounded to the sheet and do not mutate trust |
+| Vayu handoff reliability/latency | Vayu Gateway v3, cancellation and persisted parent lookup unchanged |
+| Errors | Pairing/management failures are bounded; secure/local continuity fallback preserved |
 | Voice reliability | Existing playback cancellation/barge-in unchanged |
-| UI responsiveness | One avatar-first trust sheet; no conversation window; repeat revoke prompt removed |
-| Accessibility | Dialog has labelled title and close control; existing live interaction states unchanged |
-| Resource usage | Static CSS/JS + controller only; no new runtime dependency or database work |
-| Security boundary | Metadata-only inventory; management secret memory-only; static secret and localStorage device token remain known limitations |
+| UI responsiveness | Native credential prompts replaced by two labelled in-app forms; no conversation window |
+| Accessibility | Pairing/management dialogs use labelled headings, form labels, password inputs and live pairing status |
+| Resource usage | Static CSS/JS + existing controller only; no new runtime dependency or database work |
+| Security boundary | Owner secrets remain ephemeral; issued device bearer token still in localStorage and static shared-secret owner auth remains a known limitation |
 
 ## Rollback policy
-Return to `2c46d39716399206ca9d208626f3f57c8f6d0130` to remove this UI evolution. No destructive schema rollback is required. Normal evolution must preserve the Constitution, HEART/BRAIN boundary and approval gates.
+Return to governed head `11cabca8dbc9ff94dda5e5a37386fce82710f724` to remove this pairing evolution, restoring validated runtime `0f57af0525ea869a0fc853e51045f25ea2ab85a1` (CI #146). No destructive schema rollback is required. Normal evolution must preserve the Constitution, HEART/BRAIN boundary and approval gates.
 
 ## Next identified gaps
 - Add an owner-authenticated typed/filtered trust-history endpoint.
-- Replace static owner-management shared-secret authentication with passkeys/WebAuthn/OIDC-grade authentication.
-- Replace enrollment/management prompts with a safer pairing and trusted-device flow.
-- Move durable device possession credentials away from general browser localStorage when a stronger primitive is introduced.
+- Replace static owner enrollment/management shared-secret authentication with passkeys/WebAuthn/OIDC-grade authentication.
+- Move durable device possession credentials away from general browser localStorage when a stronger credential primitive is introduced.
+- Consider a no-reload secure-continuity handoff after pairing once the inline avatar script is modularized.
 - Consider tamper-evident integrity verification for high-value trust-management audit events.
 - Retire unsigned local continuity only after secure owner identity is universally configured and migration-safe.
