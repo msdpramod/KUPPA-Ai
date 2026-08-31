@@ -1,5 +1,6 @@
 package ai.kuppa.chat;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ public class OwnerDeviceIdentityService {
     private final long tokenTtlSeconds;
     private final Clock clock;
 
+    @Autowired
     public OwnerDeviceIdentityService(
             @Value("${kuppa.identity.owner-id:owner}") String ownerId,
             @Value("${kuppa.identity.enrollment-secret:}") String enrollmentSecret,
