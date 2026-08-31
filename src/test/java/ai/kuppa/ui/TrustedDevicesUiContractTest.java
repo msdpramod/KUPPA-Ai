@@ -30,4 +30,20 @@ class TrustedDevicesUiContractTest {
         assertFalse(script.contains("device.managementSecret"));
         assertFalse(script.contains("device.signingSecret"));
     }
+
+    @Test
+    void pairingFlowAvoidsCredentialPromptsAndDoesNotPersistOwnerSecrets() throws Exception {
+        String script = resource("static/trusted-devices.js");
+        assertTrue(script.contains("Pair this device"));
+        assertTrue(script.contains("Pair securely"));
+        assertTrue(script.contains("/api/chat/owner/device"));
+        assertTrue(script.contains("X-KUPPA-Owner-Enroll-Key"));
+        assertTrue(script.contains("autocomplete=\"new-password\""));
+        assertTrue(script.contains("pairKey.value=''"));
+        assertTrue(script.contains("managementInput.value=''"));
+        assertTrue(script.contains("kuppa-device-paired"));
+        assertFalse(script.contains("window.prompt"));
+        assertFalse(script.contains("kuppa.ownerEnrollmentKey"));
+        assertFalse(script.contains("kuppa.ownerManagementKey"));
+    }
 }
