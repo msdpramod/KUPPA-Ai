@@ -25,7 +25,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-30 03:00 Heart | `2026/08/2026-08-30-0300-owner-device-management-boundary.md` | `5cfc129274addf813f38af555f9931a13d61010c` | Management boundary; CI #131 caught compile regression |
 | 2026-08-30 03:10 Heart | `2026/08/2026-08-30-0310-owner-management-constructor-fix.md` | `c726f7fef6f9fccb5709ec7e741d41f11a1264ad` | Regression repaired; CI #132 green |
 | 2026-08-31 03:00 Heart | `2026/08/2026-08-31-0300-owner-device-audit-ledger.md` | `34d762d71b752fcaa88c89b9acc0add6780d7a66` | Sanitized trust audit ledger; CI #135 green |
-| 2026-08-31 15:00 UI | `2026/08/2026-08-31-1500-trusted-devices-sheet.md` | validation pending | Avatar-first trusted-device metadata/forget/revoke sheet; promotion requires green CI |
+| 2026-08-31 15:00 UI | `2026/08/2026-08-31-1500-trusted-devices-sheet.md` | `aad8bae532af917c05bc879eb357109a962d3464` | Trusted-device sheet; CI #145 caught one over-broad new contract-test assertion; not promoted |
+| 2026-08-31 15:10 UI | `2026/08/2026-08-31-1510-trusted-devices-contract-fix.md` | validation pending | Correct credential-exposure guard + avoid repeat management-key prompt; full CI required |
 
 ## Required preflight for future runs
 1. Read `docs/KUPPA_CONSTITUTION.md`.

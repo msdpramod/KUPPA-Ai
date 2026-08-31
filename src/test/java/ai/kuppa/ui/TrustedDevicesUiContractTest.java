@@ -24,7 +24,10 @@ class TrustedDevicesUiContractTest {
         assertTrue(script.contains("Revoke everywhere"));
         assertTrue(script.contains("managementKey=null"));
         assertFalse(script.contains("ownerManagementKey.v1"));
-        assertFalse(script.contains("device.token"));
-        assertFalse(script.contains("continuityToken"));
+        assertFalse(script.contains("device.deviceToken"));
+        assertFalse(script.contains("device.continuityToken"));
+        assertFalse(script.contains("device.enrollmentSecret"));
+        assertFalse(script.contains("device.managementSecret"));
+        assertFalse(script.contains("device.signingSecret"));
     }
 }
