@@ -1,48 +1,42 @@
 # KUPPA Known-Good Baseline
 
 ## Runtime baseline
-- **Current validated implementation:** `34d762d71b752fcaa88c89b9acc0add6780d7a66` (owner-device trust audit ledger: sanitized enrollment, migration, continuity issuance and revocation audit events), validated by GitHub Actions CI run #135.
-- **Previous validated runtime:** `c726f7fef6f9fccb5709ec7e741d41f11a1264ad` (owner device-management boundary: metadata inventory + owner-management remote revocation, with constructor regression repaired), validated by GitHub Actions CI run #132.
-- **Previous UI runtime:** `d938200ea9a70a2cb55b71830663d6decc7a4a5e` (avatar owner-device authorized signed continuity with local fallback; CI #125 green).
+- **Current validated implementation:** `0f57af0525ea869a0fc853e51045f25ea2ab85a1` (avatar-first Trusted Devices sheet with metadata-only inventory, local Forget, global Revoke and repaired UI contract), validated by GitHub Actions CI #146.
+- **Previous governed branch head:** `2c46d39716399206ca9d208626f3f57c8f6d0130` (Spring multi-constructor startup-fix documentation head), validated by CI #144.
+- **Previous security/runtime baseline:** `34d762d71b752fcaa88c89b9acc0add6780d7a66` (owner-device trust audit ledger), validated by CI #135.
 
 ## Current evidence
-- Owner-device possession tokens must pass cryptographic validation and persistent active-trust authorization before owner continuity is issued.
-- Explicit owner enrollment persists a device trust record; revoked devices remain denied even while their signed tokens are otherwise valid.
-- Owner continuity issuance records `lastContinuityIssuedAt` and increments `continuityIssueCount` per device.
-- Existing `POST /api/chat/owner/device/revoke` preserves self-revocation for a currently valid device credential.
-- `KUPPA_OWNER_MANAGEMENT_SECRET` is a distinct minimum-32-byte environment-only management credential; weak/missing configuration fails closed.
-- `GET /api/chat/owner/devices` exposes owner-scoped device metadata only and never returns bearer tokens or signing material.
-- `POST /api/chat/owner/devices/{deviceId}/revoke` permits remote revocation of a lost device without possession of the target device token.
-- Successful device enrollment, legacy migration, owner-continuity issuance, self-revocation and owner-management remote revocation now emit sanitized durable audit events using the existing `audit_events` table.
-- New trust audit details carry bounded actor/reason codes only; device/token/signing credentials are never written to audit detail.
-- Cross-owner remote-revocation failure emits no misleading success audit event.
-- CI #135 passed the full Maven test workflow for implementation `34d762d...`.
-- The avatar's signed-continuity/local-fallback behavior, VayuBrainGateway v3, correlation/cancellation, persisted parent restoration, confidence-aware memory, state engine, voice barge-in, degraded brain presence, device signing-key rotation, and consequential-action approval gates remain intact.
+- The avatar exposes a `Trusted devices` sheet without restoring a conversation window.
+- Inventory is metadata-only: label, token version, enrollment/usage timestamps, continuity count and active/revoked state.
+- `Forget on this browser` clears local possession/continuity state only; `Revoke everywhere` uses the owner-management remote-revocation boundary.
+- The owner-management key is held only in JS memory while the sheet is open and is not written to localStorage.
+- Revoking another device refreshes metadata using the already-entered ephemeral credential without another prompt.
+- Missing/rejected management credentials leave normal conversation usable and do not mutate trust.
+- Persistent revocation, signed continuity, audit ledger, VayuBrainGateway v3, cancellation, parent restoration, confidence-aware memory, state engine, voice barge-in, degraded brain presence, signing-key rotation and consequential-action approvals remain intact.
+- CI #145 rejected an over-broad new contract assertion before promotion; CI #146 passed the repaired runtime.
 
 ## Scorecard baseline
 | Dimension | Evidence status |
 |---|---|
-| Build stability | Green on CI run #135 |
-| Conversation quality | Existing Continue/Correct/New topic, refresh recovery, and signed continuity preserved |
+| Build stability | Green on CI #146 after CI #145 regression rejection |
+| Conversation quality | Conversation/avatar flow unchanged; Trusted Devices remains secondary UI |
 | Personality consistency | Unchanged |
-| Memory accuracy | Existing behavior/tests unchanged |
-| Vayu handoff reliability/latency | v3 correlation/cancellation/persisted parent lookup unchanged |
-| Errors | Cross-owner remote revocation still fails closed and now also avoids false success audit entries |
+| Memory accuracy | Existing confidence-aware memory behavior/tests unchanged |
+| Vayu handoff reliability/latency | Vayu Gateway v3 and cancellation/persisted parent lookup unchanged |
+| Errors | Management/auth failures are bounded to the sheet and do not mutate trust |
 | Voice reliability | Existing playback cancellation/barge-in unchanged |
-| UI responsiveness | Avatar-first continuity UI unchanged in this Heart cycle |
-| Accessibility | Existing live status semantics unchanged |
-| Resource usage | Existing audit table reused; no new runtime dependency |
-| Security boundary | Device trust lifecycle now leaves sanitized durable audit evidence; browser token storage and static management secret remain known limitations |
+| UI responsiveness | One avatar-first trust sheet; no conversation window; repeat revoke prompt removed |
+| Accessibility | Dialog has labelled title and close control; existing live interaction states unchanged |
+| Resource usage | Static CSS/JS + controller only; no new runtime dependency or database work |
+| Security boundary | Metadata-only inventory; management secret memory-only; static secret and localStorage device token remain known limitations |
 
 ## Rollback policy
-For the owner-device trust audit ledger, return to `c726f7fef6f9fccb5709ec7e741d41f11a1264ad`. No destructive schema rollback is required because this evolution reuses the existing `audit_events` table. Normal evolution must preserve the KUPPA Constitution and approval gates.
+Return to `2c46d39716399206ca9d208626f3f57c8f6d0130` to remove this UI evolution. No destructive schema rollback is required. Normal evolution must preserve the Constitution, HEART/BRAIN boundary and approval gates.
 
 ## Next identified gaps
-- Add an avatar-first Trusted Devices management sheet that consumes metadata only and clearly distinguishes local Forget from server-side Revoke.
-- Add an owner-authenticated typed/filtered trust-history endpoint instead of relying on the broad generic audit view.
-- Consider tamper-evident chaining or integrity verification for high-value trust-management audit events.
-- Replace the minimal enrollment prompt with a safer pairing flow.
-- Move durable device possession credentials away from general browser localStorage when a stronger credential primitive is introduced.
-- Replace static owner-management shared-secret authentication with passkey/WebAuthn/OIDC-grade authentication before treating the boundary as phishing resistant.
-- Retire migration-on-first-valid-use after all active devices have durable trust records.
+- Add an owner-authenticated typed/filtered trust-history endpoint.
+- Replace static owner-management shared-secret authentication with passkeys/WebAuthn/OIDC-grade authentication.
+- Replace enrollment/management prompts with a safer pairing and trusted-device flow.
+- Move durable device possession credentials away from general browser localStorage when a stronger primitive is introduced.
+- Consider tamper-evident integrity verification for high-value trust-management audit events.
 - Retire unsigned local continuity only after secure owner identity is universally configured and migration-safe.
