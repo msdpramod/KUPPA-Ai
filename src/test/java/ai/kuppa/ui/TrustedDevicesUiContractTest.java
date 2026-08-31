@@ -1,0 +1,30 @@
+package ai.kuppa.ui;
+
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class TrustedDevicesUiContractTest {
+    private String resource(String path) throws IOException {
+        try (var in = getClass().getClassLoader().getResourceAsStream(path)) {
+            assertNotNull(in, path + " must exist");
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    @Test
+    void trustedDevicesSheetUsesMetadataOnlyOwnerManagementApis() throws Exception {
+        String script = resource("static/trusted-devices.js");
+        assertTrue(script.contains("/api/chat/owner/devices"));
+        assertTrue(script.contains("X-KUPPA-Owner-Management-Key"));
+        assertTrue(script.contains("Forget on this browser"));
+        assertTrue(script.contains("Revoke everywhere"));
+        assertTrue(script.contains("managementKey=null"));
+        assertFalse(script.contains("ownerManagementKey.v1"));
+        assertFalse(script.contains("device.token"));
+        assertFalse(script.contains("continuityToken"));
+    }
+}
