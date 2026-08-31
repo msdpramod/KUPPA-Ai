@@ -1,5 +1,6 @@
 package ai.kuppa.chat;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ public class ContinuitySessionService {
     private final long ttlSeconds;
     private final Clock clock;
 
+    @Autowired
     public ContinuitySessionService(
             @Value("${kuppa.continuity.signing-secret:}") String signingSecret,
             @Value("${kuppa.continuity.session-ttl-seconds:2592000}") long ttlSeconds) {
