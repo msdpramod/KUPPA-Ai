@@ -1,6 +1,7 @@
 package ai.kuppa.chat;
 
 import ai.kuppa.audit.AuditService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ public class OwnerDeviceTrustService {
     private final Clock clock;
     private final AuditService auditService;
 
+    @Autowired
     public OwnerDeviceTrustService(OwnerDeviceTrustRepository repository, AuditService auditService) {
         this(repository, Clock.systemUTC(), auditService);
     }
