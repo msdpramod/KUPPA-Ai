@@ -18,7 +18,9 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-31 15:40 UI | `2026/08/2026-08-31-1540-in-app-device-pairing.md` | `2e3f4c2575bba55af3fedec87db6b78253c309f9` | In-app pairing + management credential forms; CI #149 green |
 | 2026-08-31 15:50 UI | `2026/08/2026-08-31-1550-in-app-device-pairing-validation.md` | `3ee84f92c55b51460ce02d9171772d87299fd25b` | Documentation-only validation and baseline promotion; runtime remains `2e3f4c...` |
 | 2026-09-01 15:00 UI | `2026/09/2026-09-01-1500-no-reload-trusted-continuity.md` | `b781e4bd00233dbf7d16a5d34ea686649c330451` | No-reload signed continuity activation; CI #152 green |
-| 2026-09-01 15:10 UI | `2026/09/2026-09-01-1510-no-reload-trusted-continuity-validation.md` | this closeout commit | Validation/baseline promotion; runtime remains `b781e4bd...` |
+| 2026-09-01 15:10 UI | `2026/09/2026-09-01-1510-no-reload-trusted-continuity-validation.md` | closeout commit | Validation/baseline promotion; runtime remains `b781e4bd...` |
+| 2026-09-02 03:00 Heart | `2026/09/2026-09-02-0300-typed-owner-trust-history.md` | `79b8fa367affc86fa4f63b31244436cf2f7f6628` | Typed/filtered owner trust-history contract; CI #155 green |
+| 2026-09-02 03:10 Heart | `2026/09/2026-09-02-0310-typed-owner-trust-history-validation.md` | this closeout commit | Validation/baseline promotion; runtime remains `79b8fa36...` |
 
 Older evolution records remain under dated directories and in Git history.
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-02
+### Changed
+- Added an owner-authenticated typed trust-history API at `GET /api/chat/owner/trust-history`.
+- Trust history is restricted to KUPPA owner-device lifecycle events, supports optional device filtering, and caps responses at 100 items.
+- The new contract returns typed metadata only and does not expose raw audit details or credentials.
+
+### Safety
+- Reuses the existing owner-management authentication boundary and fails closed when disabled or unauthorized.
+- No Vayu reasoning, planning, retrieval, tool/agent orchestration or execution behavior changed.
+- No consequential-action approval behavior changed.
+- No new database schema, runtime dependency, secret, or configuration was introduced.
+
 ## 2026-09-01
 ### Changed
 - Removed the full-page reload after successful owner-device pairing.
