@@ -46,4 +46,15 @@ class TrustedDevicesUiContractTest {
         assertFalse(script.contains("kuppa.ownerEnrollmentKey"));
         assertFalse(script.contains("kuppa.ownerManagementKey"));
     }
+
+    @Test
+    void pairingActivatesSignedContinuityWithoutReloadingThePage() throws Exception {
+        String script = resource("static/trusted-devices.js");
+        assertTrue(script.contains("window.issueOwnerContinuity"));
+        assertTrue(script.contains("window.restoreContinuity"));
+        assertTrue(script.contains("kuppa-device-pairing-complete"));
+        assertTrue(script.contains("Trusted continuity is active."));
+        String pairingFlow = script.substring(script.indexOf("pairForm.addEventListener"), script.indexOf("function currentDeviceId"));
+        assertFalse(pairingFlow.contains("location.reload()"));
+    }
 }

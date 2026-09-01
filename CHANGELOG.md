@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-01
+### Changed
+- Removed the full-page reload after successful owner-device pairing.
+- Pairing now activates the existing signed owner continuity session and restores resumable metadata in-place, preserving avatar and conversation presence.
+- Added bounded UI failure handling when secure continuity cannot be activated; KUPPA does not claim trusted continuity unless issuance succeeds.
+- Added non-secret `kuppa-device-pairing-complete` observability after successful in-place activation.
+
+### Safety
+- No Vayu reasoning, planning, retrieval, tool/agent orchestration or execution behavior changed.
+- No consequential-action approval behavior changed.
+- Owner enrollment secret handling and device-token storage behavior are unchanged; the localStorage bearer-token limitation remains explicit.
+
 ## 2026-08-31
 ### Changed
 - Added an avatar-first Trusted Devices sheet backed by metadata-only owner-device inventory and remote-revocation APIs.
