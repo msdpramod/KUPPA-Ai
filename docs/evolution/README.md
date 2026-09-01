@@ -16,7 +16,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-08-31 15:10 UI | `2026/08/2026-08-31-1510-trusted-devices-contract-fix.md` | `0f57af0525ea869a0fc853e51045f25ea2ab85a1` | Assertion repaired + repeat prompt removed; CI #146 green |
 | 2026-08-31 15:20 UI | `2026/08/2026-08-31-1520-trusted-devices-validation.md` | closeout commit | Validation/baseline promotion; runtime remains `0f57af05...` |
 | 2026-08-31 15:40 UI | `2026/08/2026-08-31-1540-in-app-device-pairing.md` | `2e3f4c2575bba55af3fedec87db6b78253c309f9` | In-app pairing + management credential forms; CI #149 green |
-| 2026-08-31 15:50 UI | `2026/08/2026-08-31-1550-in-app-device-pairing-validation.md` | this closeout commit | Documentation-only validation and baseline promotion; runtime remains `2e3f4c...` |
+| 2026-08-31 15:50 UI | `2026/08/2026-08-31-1550-in-app-device-pairing-validation.md` | `3ee84f92c55b51460ce02d9171772d87299fd25b` | Documentation-only validation and baseline promotion; runtime remains `2e3f4c...` |
+| 2026-09-01 15:00 UI | `2026/09/2026-09-01-1500-no-reload-trusted-continuity.md` | this implementation commit | Awaiting CI before promotion |
 
 Older evolution records remain under `docs/evolution/2026/08/` and in Git history.
 
