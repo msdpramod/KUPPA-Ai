@@ -155,4 +155,35 @@ class ConversationMemoryCaptureServiceTest {
         assertTrue(service.capture("I am a backend engineer").isEmpty());
         verify(repository, never()).save(any(PersonaMemory.class));
     }
+
+    @Test
+    void explicitForgetDeactivatesOnlyExactActiveMemory() {
+        PersonaMemoryRepository repository = mock(PersonaMemoryRepository.class);
+        PersonaMemory target = new PersonaMemory("PREFERENCE", "I prefer concise technical answers");
+        PersonaMemory unrelated = new PersonaMemory("PREFERENCE", "I prefer dark mode");
+        when(repository.findByActiveTrueOrderByUpdatedAtDesc()).thenReturn(List.of(target, unrelated));
+        when(repository.save(any(PersonaMemory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConversationMemoryCaptureService service = new ConversationMemoryCaptureService(repository);
+        assertTrue(service.capture("Forget that I prefer concise technical answers.").isEmpty());
+
+        assertFalse(target.isActive());
+        assertTrue(target.isReviewed());
+        assertTrue(unrelated.isActive());
+        verify(repository).save(target);
+        verify(repository, never()).save(unrelated);
+    }
+
+    @Test
+    void explicitForgetDoesNotUsePartialMatching() {
+        PersonaMemoryRepository repository = mock(PersonaMemoryRepository.class);
+        PersonaMemory existing = new PersonaMemory("PREFERENCE", "I prefer concise technical answers");
+        when(repository.findByActiveTrueOrderByUpdatedAtDesc()).thenReturn(List.of(existing));
+
+        ConversationMemoryCaptureService service = new ConversationMemoryCaptureService(repository);
+        assertTrue(service.capture("Please forget that I prefer concise answers").isEmpty());
+
+        assertTrue(existing.isActive());
+        verify(repository, never()).save(any(PersonaMemory.class));
+    }
 }

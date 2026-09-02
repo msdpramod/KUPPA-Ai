@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-03
+### Changed
+- Added explicit conversational memory forgetting for `forget that ...` and `please forget that ...` owner instructions.
+- Forgetting is exact-match only after case/whitespace/terminal-punctuation normalization; partial and fuzzy matches are intentionally not deleted.
+- Forgotten memories are deactivated through the existing reviewed/inactive memory path so stale personal context stops being presented as active memory.
+
+### Safety
+- No Vayu reasoning, planning, retrieval, tool/agent orchestration or execution behavior changed.
+- No consequential-action approval behavior changed.
+- No new database schema, runtime dependency, secret, or configuration was introduced.
+- No fuzzy/semantic bulk deletion path was added.
+
 ## 2026-09-02
 ### Changed
 - Added an owner-authenticated typed trust-history API at `GET /api/chat/owner/trust-history`.
