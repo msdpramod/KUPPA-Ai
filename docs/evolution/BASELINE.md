@@ -1,42 +1,41 @@
 # KUPPA Known-Good Baseline
 
 ## Runtime baseline
-- **Current validated implementation:** `79b8fa367affc86fa4f63b31244436cf2f7f6628` (owner-authenticated typed/filtered trust-history contract), validated by GitHub Actions CI #155.
-- **Previous validated implementation:** `b781e4bd00233dbf7d16a5d34ea686649c330451` (in-place signed continuity activation after owner-device pairing), validated by CI #152.
-- **Pre-change governed branch head:** `c0794f918d872acecedb035d4c75dd270f56fd71`.
+- **Current validated implementation:** `0006222796a71b1ae0bea070d68d0c8c952b4611` (avatar-first typed trust activity inside Trusted Devices), validated by GitHub Actions CI #158.
+- **Previous validated implementation:** `79b8fa367affc86fa4f63b31244436cf2f7f6628` (owner-authenticated typed/filtered trust-history contract), validated by CI #155.
+- **Pre-change governed branch head:** `0769d1ebad7550c21454f279dc0a9b2554bfad9d`.
 
 ## Current evidence
-- `GET /api/chat/owner/trust-history` exposes only the five allow-listed owner-device trust lifecycle event types.
-- Optional `deviceId` filtering is repository-scoped; the new service does not fall back to generic all-audit access.
-- Response items contain only event type, device ID, bounded actor/reason metadata and timestamp; raw audit detail is not returned.
-- Result count is bounded to 1..100 with a default of 50.
-- Owner-management authentication remains fail-closed when disabled or rejected.
-- No schema, dependency, secret/configuration, Vayu cognition, voice/avatar, memory or approval-gate changes were introduced.
-- CI #155 passed checkout, Java setup, full Maven `Test`, cleanup and completion for implementation `79b8fa36...`.
+- Trusted Devices now exposes a compact `Trust activity` view backed only by `GET /api/chat/owner/trust-history`.
+- The UI requests at most 30 typed events and supports all-device or per-device filtering.
+- The same ephemeral `X-KUPPA-Owner-Management-Key` session is reused; no extra credential prompt or browser persistence is introduced.
+- Raw generic audit access is not used and raw `event.detail` is not rendered.
+- Remote revocation refreshes trust activity without a page reload.
+- No backend API, schema, dependency, secret/configuration, Vayu cognition, voice/avatar engine, memory or approval-gate changes were introduced.
+- CI #158 passed checkout, Java setup, full Maven `Test`, cleanup and completion for implementation `00062227...`.
 
 ## Scorecard baseline
 | Dimension | Evidence status |
 |---|---|
-| Build stability | Green on CI #155 |
+| Build stability | Green on CI #158 |
 | Conversation quality | Unchanged; no conversation-generation path modified |
 | Personality consistency | Unchanged |
 | Memory accuracy | Existing confidence-aware memory behavior/tests unchanged |
 | Vayu handoff reliability/latency | Vayu Gateway v3 unchanged |
-| Errors | Trust-history access fails closed through existing owner-management auth; bounded response path |
+| Errors | Trust-history load failures render bounded UI errors; no fabricated events |
 | Voice reliability | Unchanged |
-| UI responsiveness | Unchanged; no UI code modified |
-| Accessibility | Unchanged |
-| Resource usage | Read-only repository query + bounded mapping; no new dependency or schema work |
-| Security boundary | Generic audit detail is not exposed; trust events are allow-listed and owner-management authenticated |
+| UI responsiveness | No page reload added; trust activity is bounded to 30 requested events |
+| Accessibility | Tab selection exposes `aria-selected`; filter remains keyboard/focus accessible |
+| Resource usage | One bounded read on activity view/refresh; no new dependency or schema work |
+| Security boundary | Typed owner-only metadata; management key remains page-memory-only; no generic audit/raw detail rendering |
 
 ## Rollback policy
-Return to governed head `c0794f918d872acecedb035d4c75dd270f56fd71` to remove this Heart evolution, restoring validated runtime `b781e4bd00233dbf7d16a5d34ea686649c330451` (CI #152). No destructive schema rollback is required. Normal evolution must preserve the Constitution, HEART/BRAIN boundary and approval gates.
+Return to governed head `0769d1ebad7550c21454f279dc0a9b2554bfad9d` to remove this UI evolution, restoring validated runtime `79b8fa367affc86fa4f63b31244436cf2f7f6628` (CI #155). No destructive schema rollback is required. Normal evolution must preserve the Constitution, HEART/BRAIN boundary and approval gates.
 
 ## Next identified gaps
 - Replace static owner enrollment/management shared-secret authentication with passkeys/WebAuthn/OIDC-grade authentication.
 - Add explicit owner identity to trust/audit persistence before any multi-owner architecture.
 - Consider tamper-evident integrity verification for high-value trust-management audit events.
-- Surface typed trust history in the avatar-first Trusted Devices experience without exposing credentials.
-- Replace classic-script global continuity bindings with an explicit KUPPA continuity adapter/module.
+- Replace classic-script global continuity/trust bindings with an explicit KUPPA adapter/module.
 - Move durable device possession credentials away from general browser localStorage when a stronger credential primitive is introduced.
 - Retire unsigned local continuity only after secure owner identity is universally configured and migration-safe.
