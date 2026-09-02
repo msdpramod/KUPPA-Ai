@@ -57,4 +57,21 @@ class TrustedDevicesUiContractTest {
         String pairingFlow = script.substring(script.indexOf("pairForm.addEventListener"), script.indexOf("function currentDeviceId"));
         assertFalse(pairingFlow.contains("location.reload()"));
     }
+
+    @Test
+    void trustActivityUsesTypedHistoryAndReusesEphemeralManagementBoundary() throws Exception {
+        String script = resource("static/trusted-devices.js");
+        assertTrue(script.contains("Trust activity"));
+        assertTrue(script.contains("/api/chat/owner/trust-history"));
+        assertTrue(script.contains("limit=30"));
+        assertTrue(script.contains("kuppa-trust-history-loaded"));
+        assertTrue(script.contains("event.eventType"));
+        assertTrue(script.contains("event.deviceId"));
+        assertTrue(script.contains("event.actor"));
+        assertTrue(script.contains("event.reason"));
+        assertFalse(script.contains("/api/audit"));
+        assertFalse(script.contains("event.detail"));
+        assertFalse(script.contains("historyToken"));
+        assertFalse(script.contains("localStorage.setItem('kuppa.ownerManagement"));
+    }
 }
