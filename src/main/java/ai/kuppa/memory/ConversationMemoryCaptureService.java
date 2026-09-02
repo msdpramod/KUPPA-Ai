@@ -31,6 +31,14 @@ public class ConversationMemoryCaptureService {
         if (message == null || message.isBlank()) return Optional.empty();
 
         String raw = message.trim();
+        String lower = raw.toLowerCase(Locale.ROOT);
+        String forgotten = afterPrefix(raw, lower, "forget that ");
+        if (forgotten == null) forgotten = afterPrefix(raw, lower, "please forget that ");
+        if (forgotten != null) {
+            forgetExactActiveMemory(forgotten);
+            return Optional.empty();
+        }
+
         Candidate candidate = classify(raw);
         if (candidate == null || candidate.content().isBlank()) return Optional.empty();
 
@@ -52,6 +60,29 @@ public class ConversationMemoryCaptureService {
                 candidate.category(), candidate.content(), candidate.confidence(),
                 candidate.source(), candidate.reviewed()));
         return Optional.of(saved);
+    }
+
+    private void forgetExactActiveMemory(String requestedContent) {
+        String normalizedRequested = normalizeForExactOwnerMatch(requestedContent);
+        if (normalizedRequested.isBlank()) return;
+
+        repository.findByActiveTrueOrderByUpdatedAtDesc().stream()
+                .filter(existing -> normalizeForExactOwnerMatch(existing.getContent()).equals(normalizedRequested))
+                .forEach(existing -> {
+                    existing.review(false);
+                    repository.save(existing);
+                });
+    }
+
+    private String normalizeForExactOwnerMatch(String content) {
+        if (content == null) return "";
+        String normalized = content.trim().toLowerCase(Locale.ROOT);
+        while (!normalized.isEmpty()) {
+            char last = normalized.charAt(normalized.length() - 1);
+            if (last != '.' && last != '!' && last != '?') break;
+            normalized = normalized.substring(0, normalized.length() - 1).trim();
+        }
+        return normalized;
     }
 
     private Candidate classify(String raw) {
