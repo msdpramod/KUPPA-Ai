@@ -20,7 +20,9 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-09-01 15:00 UI | `2026/09/2026-09-01-1500-no-reload-trusted-continuity.md` | `b781e4bd00233dbf7d16a5d34ea686649c330451` | No-reload signed continuity activation; CI #152 green |
 | 2026-09-01 15:10 UI | `2026/09/2026-09-01-1510-no-reload-trusted-continuity-validation.md` | closeout commit | Validation/baseline promotion; runtime remains `b781e4bd...` |
 | 2026-09-02 03:00 Heart | `2026/09/2026-09-02-0300-typed-owner-trust-history.md` | `79b8fa367affc86fa4f63b31244436cf2f7f6628` | Typed/filtered owner trust-history contract; CI #155 green |
-| 2026-09-02 03:10 Heart | `2026/09/2026-09-02-0310-typed-owner-trust-history-validation.md` | this closeout commit | Validation/baseline promotion; runtime remains `79b8fa36...` |
+| 2026-09-02 03:10 Heart | `2026/09/2026-09-02-0310-typed-owner-trust-history-validation.md` | closeout commit | Validation/baseline promotion; runtime remains `79b8fa36...` |
+| 2026-09-02 15:00 UI | `2026/09/2026-09-02-1500-trusted-device-trust-activity.md` | `0006222796a71b1ae0bea070d68d0c8c952b4611` | Typed trust activity inside Trusted Devices; CI #158 green |
+| 2026-09-02 15:10 UI | `2026/09/2026-09-02-1510-trusted-device-trust-activity-validation.md` | closeout commit | Validation/baseline promotion; runtime remains `00062227...` |
 
 Older evolution records remain under dated directories and in Git history.
 

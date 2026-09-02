@@ -5,9 +5,12 @@
 - Added an owner-authenticated typed trust-history API at `GET /api/chat/owner/trust-history`.
 - Trust history is restricted to KUPPA owner-device lifecycle events, supports optional device filtering, and caps responses at 100 items.
 - The new contract returns typed metadata only and does not expose raw audit details or credentials.
+- Added a compact `Trust activity` view inside the avatar-first Trusted Devices sheet, with all-device/per-device filtering and bounded refresh using the existing typed trust-history contract.
+- Trust activity reuses the existing in-memory owner-management credential and refreshes after remote revocation without introducing another credential prompt or page reload.
 
 ### Safety
 - Reuses the existing owner-management authentication boundary and fails closed when disabled or unauthorized.
+- Trust activity renders typed event metadata only; it does not consume generic audit detail or persist owner-management credentials.
 - No Vayu reasoning, planning, retrieval, tool/agent orchestration or execution behavior changed.
 - No consequential-action approval behavior changed.
 - No new database schema, runtime dependency, secret, or configuration was introduced.
