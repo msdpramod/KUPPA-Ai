@@ -11,7 +11,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-09-03 15:00 UI | `2026/09/2026-09-03-1500-explicit-continuity-adapter.md` | `b96bf1f08da4d3c0935b93a36b7a647d2db7951d` | CI #164 caught one new contract assertion mismatch; not promoted |
 | 2026-09-03 15:10 UI | `2026/09/2026-09-03-1510-continuity-adapter-contract-fix.md` | `8efd0be0283f29368c5605c5c4a5782d59914e2b` | Contract assertion aligned; CI #165 green |
 | 2026-09-03 15:20 UI | `2026/09/2026-09-03-1520-continuity-adapter-validation.md` | `c47cbea076e54c657c58617764c0be08125389b7` | Baseline promotion; CI #166 green |
-| 2026-09-04 03:00 Heart | `2026/09/2026-09-04-0300-privacy-safe-memory-change-observability.md` | this commit | Candidate; full Maven CI required before promotion |
+| 2026-09-04 03:00 Heart | `2026/09/2026-09-04-0300-privacy-safe-memory-change-observability.md` | `bae44bab17dc9402fc4abcf195165a51398d82e4` | Privacy-safe memory mutation observability; CI #168 green |
+| 2026-09-04 03:10 Heart | `2026/09/2026-09-04-0310-memory-observability-validation.md` | this closeout commit | Baseline promotion; runtime remains `bae44bab...` |
 
 Older evolution records remain under dated directories and in Git history.
 
