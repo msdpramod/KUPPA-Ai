@@ -25,6 +25,9 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-09-02 15:10 UI | `2026/09/2026-09-02-1510-trusted-device-trust-activity-validation.md` | closeout commit | Validation/baseline promotion; runtime remains `00062227...` |
 | 2026-09-03 03:00 Heart | `2026/09/2026-09-03-0300-explicit-owner-memory-forget.md` | `da8c13b42011360eb63ce30dd14fa0abf1e414a1` | Exact owner memory forgetting; CI #161 green |
 | 2026-09-03 03:10 Heart | `2026/09/2026-09-03-0310-explicit-owner-memory-forget-validation.md` | closeout commit | Validation/baseline promotion; runtime remains `da8c13b...` |
+| 2026-09-03 15:00 UI | `2026/09/2026-09-03-1500-explicit-continuity-adapter.md` | `b96bf1f08da4d3c0935b93a36b7a647d2db7951d` | CI #164 caught one new contract assertion mismatch; not promoted |
+| 2026-09-03 15:10 UI | `2026/09/2026-09-03-1510-continuity-adapter-contract-fix.md` | `8efd0be0283f29368c5605c5c4a5782d59914e2b` | Contract assertion aligned with intentional optional fallback; CI #165 green |
+| 2026-09-03 15:20 UI | `2026/09/2026-09-03-1520-continuity-adapter-validation.md` | this closeout commit | Baseline promotion; runtime remains `b96bf1f...` |
 
 Older evolution records remain under dated directories and in Git history.
 

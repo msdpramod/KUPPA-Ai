@@ -48,10 +48,24 @@ class TrustedDevicesUiContractTest {
     }
 
     @Test
+    void pairingUsesExplicitContinuityAdapterInsteadOfClassicFunctionGlobals() throws Exception {
+        String script = resource("static/trusted-devices.js");
+        String adapter = resource("static/kuppa-continuity-adapter.js");
+        assertTrue(script.contains("KuppaContinuityAdapter"));
+        assertTrue(script.contains("adapter.activateTrustedContinuity()"));
+        assertTrue(script.contains("adapter.restoreContinuity()"));
+        assertTrue(script.contains("adapter?.forgetDevice()"));
+        assertFalse(script.contains("window.issueOwnerContinuity"));
+        assertFalse(script.contains("window.restoreContinuity"));
+        assertFalse(script.contains("window.forgetOwnerDevice"));
+        assertTrue(adapter.contains("version:'v1'"));
+        assertTrue(adapter.contains("Object.freeze"));
+        assertTrue(adapter.contains("kuppa-continuity-adapter-ready"));
+    }
+
+    @Test
     void pairingActivatesSignedContinuityWithoutReloadingThePage() throws Exception {
         String script = resource("static/trusted-devices.js");
-        assertTrue(script.contains("window.issueOwnerContinuity"));
-        assertTrue(script.contains("window.restoreContinuity"));
         assertTrue(script.contains("kuppa-device-pairing-complete"));
         assertTrue(script.contains("Trusted continuity is active."));
         String pairingFlow = script.substring(script.indexOf("pairForm.addEventListener"), script.indexOf("function currentDeviceId"));

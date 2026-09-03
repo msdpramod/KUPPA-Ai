@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 @Controller
 public class AvatarPageController {
     private static final String TRUSTED_DEVICES_CSS = "<link rel=\"stylesheet\" href=\"/trusted-devices.css\"/>";
+    private static final String CONTINUITY_ADAPTER_JS = "<script src=\"/kuppa-continuity-adapter.js\"></script>";
     private static final String TRUSTED_DEVICES_JS = "<script src=\"/trusted-devices.js\"></script>";
 
     @GetMapping(value = "/", produces = MediaType.TEXT_HTML_VALUE)
@@ -23,6 +24,6 @@ public class AvatarPageController {
             html = new String(input.readAllBytes(), StandardCharsets.UTF_8);
         }
         return html.replace("</head>", TRUSTED_DEVICES_CSS + "</head>")
-                .replace("</body>", TRUSTED_DEVICES_JS + "</body>");
+                .replace("</body>", CONTINUITY_ADAPTER_JS + TRUSTED_DEVICES_JS + "</body>");
     }
 }
