@@ -34,14 +34,10 @@ public class ChatService {
     }
 
     @Transactional
-    public ChatResponse chat(String message) {
-        return chat(message, null, null, null, null);
-    }
+    public ChatResponse chat(String message) { return chat(message, null, null, null, null); }
 
     @Transactional
-    public ChatResponse chat(String message, String correlationId) {
-        return chat(message, correlationId, null, null, null);
-    }
+    public ChatResponse chat(String message, String correlationId) { return chat(message, correlationId, null, null, null); }
 
     @Transactional
     public ChatResponse chat(String message, String correlationId, String turnMode, String parentCorrelationId) {
@@ -58,15 +54,22 @@ public class ChatService {
         chatRepository.save(new ChatMessage(
                 "USER", message, requestCorrelationId, turnContext.mode(), turnContext.parentCorrelationId(), requestSessionId));
 
-        memoryCapture.capture(message).ifPresent(memory ->
+        ConversationMemoryCaptureService.CaptureOutcome memoryOutcome = memoryCapture.process(message);
+        memoryOutcome.memory().ifPresent(memory ->
                 audit.record("MEMORY_CAPTURED", memory.getId(),
-                        memory.getCategory() + ": " + memory.getContent()));
+                        "category=" + memory.getCategory()
+                                + ", confidence=" + memory.getConfidence()
+                                + ", source=" + memory.getSource()));
+        ConversationMemoryCaptureService.MemoryMutation mutation = memoryOutcome.mutation();
+        if (mutation.requested()) {
+            String detail = "affectedCount=" + mutation.affectedCount()
+                    + (mutation.categories().isEmpty() ? "" : ", categories=" + String.join("|", mutation.categories()));
+            audit.record("FORGOTTEN".equals(mutation.type()) ? "MEMORY_FORGOTTEN" : "MEMORY_FORGET_NO_MATCH",
+                    requestCorrelationId, detail);
+        }
 
-        Plan plan = planner.plan(
-                message,
-                memoryRepository.findByActiveTrueOrderByUpdatedAtDesc(),
-                requestCorrelationId,
-                turnContext);
+        Plan plan = planner.plan(message, memoryRepository.findByActiveTrueOrderByUpdatedAtDesc(),
+                requestCorrelationId, turnContext);
         ProposedAction action = null;
         if (plan.hasAction()) {
             action = actionRepository.save(new ProposedAction(plan.actionType(), plan.actionSummary(), plan.actionPayload(), plan.reason(), plan.riskLevel()));
@@ -75,10 +78,8 @@ public class ChatService {
         if (plan.brain() != null) {
             VayuBrainGateway.Response brain = plan.brain();
             audit.record("VAYU_HANDOFF", brain.correlationId(),
-                    "contract=" + brain.contractVersion()
-                            + ", provider=" + brain.provider()
-                            + ", degraded=" + brain.degraded()
-                            + ", cancelled=" + brain.cancelled()
+                    "contract=" + brain.contractVersion() + ", provider=" + brain.provider()
+                            + ", degraded=" + brain.degraded() + ", cancelled=" + brain.cancelled()
                             + ", turnMode=" + brain.turnMode()
                             + (brain.parentCorrelationId() == null ? "" : ", parentCorrelationId=" + brain.parentCorrelationId())
                             + ", latencyMs=" + brain.latencyMs()
