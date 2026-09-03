@@ -5,12 +5,16 @@
 - Added explicit conversational memory forgetting for `forget that ...` and `please forget that ...` owner instructions.
 - Forgetting is exact-match only after case/whitespace/terminal-punctuation normalization; partial and fuzzy matches are intentionally not deleted.
 - Forgotten memories are deactivated through the existing reviewed/inactive memory path so stale personal context stops being presented as active memory.
+- Added a frozen, versioned `KuppaContinuityAdapter v1` boundary for Trusted Devices.
+- Trusted Devices no longer calls classic `window.issueOwnerContinuity`, `window.restoreContinuity`, or `window.forgetOwnerDevice` bindings directly.
+- Adapter loading order is explicit: the avatar page injects the continuity adapter before the Trusted Devices module.
 
 ### Safety
 - No Vayu reasoning, planning, retrieval, tool/agent orchestration or execution behavior changed.
 - No consequential-action approval behavior changed.
 - No new database schema, runtime dependency, secret, or configuration was introduced.
 - No fuzzy/semantic bulk deletion path was added.
+- No trust credential storage or owner-permission boundary changed; existing localStorage/shared-secret limitations remain explicit.
 
 ## 2026-09-02
 ### Changed
