@@ -54,7 +54,7 @@ class TrustedDevicesUiContractTest {
         assertTrue(script.contains("KuppaContinuityAdapter"));
         assertTrue(script.contains("adapter.activateTrustedContinuity()"));
         assertTrue(script.contains("adapter.restoreContinuity()"));
-        assertTrue(script.contains("adapter.forgetDevice()"));
+        assertTrue(script.contains("adapter?.forgetDevice()"));
         assertFalse(script.contains("window.issueOwnerContinuity"));
         assertFalse(script.contains("window.restoreContinuity"));
         assertFalse(script.contains("window.forgetOwnerDevice"));
