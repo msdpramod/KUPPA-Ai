@@ -28,28 +28,30 @@ public class ConversationMemoryCaptureService {
 
     @Transactional
     public Optional<PersonaMemory> capture(String message) {
-        if (message == null || message.isBlank()) return Optional.empty();
+        return process(message).memory();
+    }
+
+    @Transactional
+    public CaptureOutcome process(String message) {
+        if (message == null || message.isBlank()) return CaptureOutcome.none();
 
         String raw = message.trim();
         String lower = raw.toLowerCase(Locale.ROOT);
         String forgotten = afterPrefix(raw, lower, "forget that ");
         if (forgotten == null) forgotten = afterPrefix(raw, lower, "please forget that ");
         if (forgotten != null) {
-            forgetExactActiveMemory(forgotten);
-            return Optional.empty();
+            return new CaptureOutcome(Optional.empty(), forgetExactActiveMemory(forgotten));
         }
 
         Candidate candidate = classify(raw);
-        if (candidate == null || candidate.content().isBlank()) return Optional.empty();
+        if (candidate == null || candidate.content().isBlank()) return CaptureOutcome.none();
 
         List<PersonaMemory> active = repository.findByActiveTrueOrderByUpdatedAtDesc();
         boolean duplicate = active.stream().anyMatch(existing ->
                 existing.getCategory().equalsIgnoreCase(candidate.category())
                         && existing.getContent().equalsIgnoreCase(candidate.content()));
-        if (duplicate) return Optional.empty();
+        if (duplicate) return CaptureOutcome.none();
 
-        // Emotional state is transient. Keep only the newest self-report active so Ollama
-        // does not blend yesterday's stress with today's calm/excitement as simultaneous truth.
         if (EMOTIONAL_SIGNAL.equals(candidate.category())) {
             active.stream()
                     .filter(existing -> EMOTIONAL_SIGNAL.equalsIgnoreCase(existing.getCategory()))
@@ -59,19 +61,29 @@ public class ConversationMemoryCaptureService {
         PersonaMemory saved = repository.save(new PersonaMemory(
                 candidate.category(), candidate.content(), candidate.confidence(),
                 candidate.source(), candidate.reviewed()));
-        return Optional.of(saved);
+        return new CaptureOutcome(Optional.of(saved), MemoryMutation.none());
     }
 
-    private void forgetExactActiveMemory(String requestedContent) {
+    private MemoryMutation forgetExactActiveMemory(String requestedContent) {
         String normalizedRequested = normalizeForExactOwnerMatch(requestedContent);
-        if (normalizedRequested.isBlank()) return;
+        if (normalizedRequested.isBlank()) return MemoryMutation.noMatch();
 
-        repository.findByActiveTrueOrderByUpdatedAtDesc().stream()
+        List<PersonaMemory> matches = repository.findByActiveTrueOrderByUpdatedAtDesc().stream()
                 .filter(existing -> normalizeForExactOwnerMatch(existing.getContent()).equals(normalizedRequested))
-                .forEach(existing -> {
-                    existing.review(false);
-                    repository.save(existing);
-                });
+                .toList();
+        if (matches.isEmpty()) return MemoryMutation.noMatch();
+
+        matches.forEach(existing -> {
+            existing.review(false);
+            repository.save(existing);
+        });
+        List<String> categories = matches.stream()
+                .map(PersonaMemory::getCategory)
+                .map(category -> category == null ? "UNKNOWN" : category.toUpperCase(Locale.ROOT))
+                .distinct()
+                .sorted()
+                .toList();
+        return new MemoryMutation("FORGOTTEN", matches.size(), categories);
     }
 
     private String normalizeForExactOwnerMatch(String content) {
@@ -92,9 +104,7 @@ public class ConversationMemoryCaptureService {
         if (remembered == null) remembered = afterPrefix(raw, lower, "please remember that ");
         if (remembered != null) return confirmed("FACT", remembered);
 
-        if (isExplicitCommunicationStyle(lower)) {
-            return confirmed("COMMUNICATION_STYLE", raw);
-        }
+        if (isExplicitCommunicationStyle(lower)) return confirmed("COMMUNICATION_STYLE", raw);
 
         if (lower.startsWith("i prefer ") || lower.startsWith("i don't like ")
                 || lower.startsWith("i do not like ") || lower.startsWith("my preference is ")) {
@@ -108,15 +118,12 @@ public class ConversationMemoryCaptureService {
         if (fromNowOn == null) fromNowOn = afterPrefix(raw, lower, "from now on ");
         if (fromNowOn != null) return confirmed("PREFERENCE", "From now on " + fromNowOn);
 
-        if (isExplicitRoutine(lower)) {
-            return confirmed("ROUTINE", raw);
-        }
+        if (isExplicitRoutine(lower)) return confirmed("ROUTINE", raw);
 
         if (isEmotionalSelfReport(lower)) {
             return new Candidate(EMOTIONAL_SIGNAL, raw, TENTATIVE_EMOTION_CONFIDENCE,
                     OWNER_SELF_REPORT, false);
         }
-
         return null;
     }
 
@@ -125,43 +132,47 @@ public class ConversationMemoryCaptureService {
     }
 
     private boolean isExplicitCommunicationStyle(String lower) {
-        return lower.startsWith("always answer ")
-                || lower.startsWith("always respond ")
-                || lower.startsWith("always reply ")
-                || lower.startsWith("please always answer ")
-                || lower.startsWith("please always respond ")
-                || lower.startsWith("please always reply ")
-                || lower.startsWith("i prefer your answers ")
-                || lower.startsWith("i prefer your responses ")
-                || lower.startsWith("i prefer your replies ")
-                || lower.startsWith("when you answer, ")
-                || lower.startsWith("when you respond, ")
-                || lower.startsWith("when you reply, ");
+        return lower.startsWith("always answer ") || lower.startsWith("always respond ")
+                || lower.startsWith("always reply ") || lower.startsWith("please always answer ")
+                || lower.startsWith("please always respond ") || lower.startsWith("please always reply ")
+                || lower.startsWith("i prefer your answers ") || lower.startsWith("i prefer your responses ")
+                || lower.startsWith("i prefer your replies ") || lower.startsWith("when you answer, ")
+                || lower.startsWith("when you respond, ") || lower.startsWith("when you reply, ");
     }
 
     private boolean isExplicitRoutine(String lower) {
-        return lower.startsWith("i usually ")
-                || lower.startsWith("i normally ")
-                || lower.startsWith("every morning ")
-                || lower.startsWith("every evening ")
-                || lower.startsWith("every day ")
-                || lower.startsWith("on weekdays i ")
+        return lower.startsWith("i usually ") || lower.startsWith("i normally ")
+                || lower.startsWith("every morning ") || lower.startsWith("every evening ")
+                || lower.startsWith("every day ") || lower.startsWith("on weekdays i ")
                 || lower.startsWith("on weekends i ");
     }
 
     private boolean isEmotionalSelfReport(String lower) {
-        boolean selfReportShape = lower.startsWith("i feel ")
-                || lower.startsWith("i'm feeling ")
-                || lower.startsWith("i am feeling ")
-                || lower.startsWith("i'm ")
-                || lower.startsWith("i am ");
-        if (!selfReportShape) return false;
-        return EMOTIONAL_SIGNALS.stream().anyMatch(lower::contains);
+        boolean selfReportShape = lower.startsWith("i feel ") || lower.startsWith("i'm feeling ")
+                || lower.startsWith("i am feeling ") || lower.startsWith("i'm ") || lower.startsWith("i am ");
+        return selfReportShape && EMOTIONAL_SIGNALS.stream().anyMatch(lower::contains);
     }
 
     private String afterPrefix(String raw, String lower, String prefix) {
         if (!lower.startsWith(prefix)) return null;
         return raw.substring(prefix.length()).trim();
+    }
+
+    public record CaptureOutcome(Optional<PersonaMemory> memory, MemoryMutation mutation) {
+        public CaptureOutcome {
+            memory = memory == null ? Optional.empty() : memory;
+            mutation = mutation == null ? MemoryMutation.none() : mutation;
+        }
+        static CaptureOutcome none() { return new CaptureOutcome(Optional.empty(), MemoryMutation.none()); }
+    }
+
+    public record MemoryMutation(String type, int affectedCount, List<String> categories) {
+        public MemoryMutation {
+            categories = categories == null ? List.of() : List.copyOf(categories);
+        }
+        static MemoryMutation none() { return new MemoryMutation("NONE", 0, List.of()); }
+        static MemoryMutation noMatch() { return new MemoryMutation("FORGET_NO_MATCH", 0, List.of()); }
+        public boolean requested() { return !"NONE".equals(type); }
     }
 
     private record Candidate(String category, String content, double confidence,
