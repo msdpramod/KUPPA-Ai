@@ -25,9 +25,9 @@ class OwnerDeviceManagementServiceTest {
         List<OwnerDeviceTrustService.DeviceSummary> devices = service.inventory("owner");
 
         assertEquals(1, devices.size());
-        assertEquals("device-1", devices.getFirst().deviceId());
-        assertEquals("Laptop", devices.getFirst().deviceLabel());
-        assertTrue(devices.getFirst().active());
+        assertEquals("device-1", devices.get(0).deviceId());
+        assertEquals("Laptop", devices.get(0).deviceLabel());
+        assertTrue(devices.get(0).active());
     }
 
     @Test
