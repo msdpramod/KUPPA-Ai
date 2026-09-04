@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-05
+### Changed
+- Added an owner-authenticated typed memory-change history endpoint at `GET /api/chat/owner/memory-history`.
+- Memory history is limited to `MEMORY_CAPTURED`, `MEMORY_FORGOTTEN`, and `MEMORY_FORGET_NO_MATCH` and returns bounded metadata only.
+
+### Safety
+- The new endpoint does not expose raw personal-memory text, raw audit detail, internal memory IDs, or correlation IDs.
+- Reuses the existing owner-management permission boundary; no new secret or authentication bypass was introduced.
+- No Vayu reasoning, planning, retrieval, tool/agent orchestration or execution behavior changed.
+- No consequential-action approval behavior changed.
+- No new database schema or runtime dependency was introduced.
+
 ## 2026-09-04
 ### Changed
 - Added structured privacy-safe outcomes for explicit conversational memory forget requests.
