@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AvatarBrainPresenceContractTest {
@@ -102,6 +103,25 @@ class AvatarBrainPresenceContractTest {
         assertTrue(html.contains("safeSet(OWNER_DEVICE_TOKEN_KEY,data.token)"));
         assertTrue(html.contains("enrollment key for this device. It is sent once and is not saved by the browser"));
         assertTrue(html.contains("PENDING_APPROVAL"));
+    }
+
+    @Test
+    void presenceControllerImprovesLatencyPerceptionAndAccessibilityWithoutBrainLogic() throws IOException {
+        String script = resource("/static/kuppa-presence.js");
+        String css = resource("/static/kuppa-presence.css");
+        assertTrue(script.contains("kuppa-state-change"));
+        assertTrue(script.contains("kuppa-brain-state-change"));
+        assertTrue(script.contains("aria-busy"));
+        assertTrue(script.contains("performance.now()"));
+        assertTrue(script.contains("still working"));
+        assertTrue(script.contains("KuppaPresenceController"));
+        assertTrue(script.contains("version:'v1'"));
+        assertTrue(script.contains("kuppa-presence-controller-ready"));
+        assertTrue(css.contains("prefers-reduced-motion: reduce"));
+        assertTrue(css.contains("data-latency=\"slow\""));
+        assertFalse(script.contains("fetch("));
+        assertFalse(script.contains("/api/chat"));
+        assertFalse(script.contains("VayuBrainGateway"));
     }
 
     private String resource(String path) throws IOException {
