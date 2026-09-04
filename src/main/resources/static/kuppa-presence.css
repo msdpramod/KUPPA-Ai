@@ -1,0 +1,12 @@
+.mic{isolation:isolate}.mic::after{content:"";position:absolute;inset:-8px;border:1px solid rgba(123,232,255,.34);border-radius:50%;opacity:0;pointer-events:none;transform:scale(.9)}
+.stage[data-state="LISTENING"] .mic::after{opacity:.72;animation:kuppa-listen-pulse 1.4s ease-out infinite}
+.stage[data-state="ASKING_VAYU"] .mic::after,.stage[data-state="THINKING"] .mic::after{opacity:.56;animation:kuppa-think-pulse 1.8s ease-in-out infinite}
+.stage[data-state="SPEAKING"] .mic::after{opacity:.78;animation:kuppa-speak-pulse 1s ease-in-out infinite}
+.stage[data-presence="engaged"] .aura{transform:translate(-50%,-50%) scale(1.018)}
+.stage[data-presence="processing"] .aura{filter:blur(5px)}
+.stage[data-presence="expressive"] .aura{transform:translate(-50%,-50%) scale(1.028)}
+.stage[data-latency="slow"] .brain-status{border-color:rgba(255,190,90,.38);color:#ffe4ad}
+@keyframes kuppa-listen-pulse{0%{transform:scale(.9);opacity:.7}100%{transform:scale(1.35);opacity:0}}
+@keyframes kuppa-think-pulse{0%,100%{transform:scale(.96);opacity:.32}50%{transform:scale(1.18);opacity:.62}}
+@keyframes kuppa-speak-pulse{0%,100%{transform:scale(.96);opacity:.38}50%{transform:scale(1.12);opacity:.78}}
+@media (prefers-reduced-motion: reduce){.mic,.mic::after,.aura{animation:none!important;transition:none!important}.stage[data-state="LISTENING"] .mic::after,.stage[data-state="ASKING_VAYU"] .mic::after,.stage[data-state="THINKING"] .mic::after,.stage[data-state="SPEAKING"] .mic::after{transform:none;opacity:.5}}
