@@ -16,7 +16,8 @@ KUPPA evolves under a HEART/BRAIN boundary: KUPPA is the human-facing HEART; Vay
 | 2026-09-04 15:00 UI | `2026/09/2026-09-04-1500-presence-latency-perception.md` | `6be4e77272a3e43ce0f64ba6f8c7f7b2d634dfdd` | Presence/latency accessibility evolution; CI #171 green |
 | 2026-09-04 15:10 UI | `2026/09/2026-09-04-1510-presence-latency-validation.md` | `8ac74ecf6a9b368396c1be3961ea27cd3b9ef290` | Validation/baseline promotion; runtime remains `6be4e772...` |
 | 2026-09-05 03:00 Heart | `2026/09/2026-09-05-0300-owner-memory-history-contract.md` | `ac082dce5d68c6908f5c843fded23df11204ce83` | Typed owner-authenticated privacy-safe memory history; CI #180 green |
-| 2026-09-05 03:10 Heart | `2026/09/2026-09-05-0310-owner-memory-history-validation.md` | this closeout commit | Validation/baseline promotion; runtime remains `ac082dce...` |
+| 2026-09-05 03:10 Heart | `2026/09/2026-09-05-0310-owner-memory-history-validation.md` | closeout commit | Validation/baseline promotion; runtime remains `ac082dce...` |
+| 2026-09-05 15:00 UI | `2026/09/2026-09-05-1500-state-aware-avatar-motion.md` | implementation commit | State-aware Three.js motion plus bounded reduced-motion policy; promotion requires green CI |
 
 Older evolution records remain under dated directories and in Git history.
 

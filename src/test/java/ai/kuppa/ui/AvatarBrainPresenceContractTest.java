@@ -1,5 +1,6 @@
 package ai.kuppa.ui;
 
+import ai.kuppa.avatar.AvatarPageController;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -122,6 +123,28 @@ class AvatarBrainPresenceContractTest {
         assertFalse(script.contains("fetch("));
         assertFalse(script.contains("/api/chat"));
         assertFalse(script.contains("VayuBrainGateway"));
+    }
+
+    @Test
+    void avatarMotionPolicyMakesThreeJsMotionStateAwareAndHonorsReducedMotion() throws IOException {
+        String script = resource("/static/kuppa-avatar-motion.js");
+        String servedHtml = new AvatarPageController().avatar();
+
+        assertTrue(script.contains("prefers-reduced-motion: reduce"));
+        assertTrue(script.contains("KuppaAvatarMotionPolicy"));
+        assertTrue(script.contains("autonomousScale(state)"));
+        assertTrue(script.contains("gazeScale()"));
+        assertTrue(script.contains("kuppa-motion-preference-change"));
+        assertTrue(script.contains("version:'v1'"));
+        assertFalse(script.contains("fetch("));
+        assertFalse(script.contains("/api/chat"));
+        assertFalse(script.contains("VayuBrainGateway"));
+
+        assertTrue(servedHtml.contains("/kuppa-avatar-motion.js"));
+        assertTrue(servedHtml.contains("globalThis.KuppaAvatarMotionPolicy"));
+        assertTrue(servedHtml.contains("Math.sin(t*.45)*.006*motionScale"));
+        assertTrue(servedHtml.contains("Math.sin(t*1.15)*.008*motionScale"));
+        assertTrue(servedHtml.contains("targetLookX*gazeScale"));
     }
 
     private String resource(String path) throws IOException {
