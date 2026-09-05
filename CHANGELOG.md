@@ -4,10 +4,13 @@
 ### Changed
 - Added an owner-authenticated typed memory-change history endpoint at `GET /api/chat/owner/memory-history`.
 - Memory history is limited to `MEMORY_CAPTURED`, `MEMORY_FORGOTTEN`, and `MEMORY_FORGET_NO_MATCH` and returns bounded metadata only.
+- Added `KuppaAvatarMotionPolicy v1` so Three.js avatar movement is state-aware and honors `prefers-reduced-motion`.
+- Reduced-motion mode now removes continuous autonomous head/bob motion and substantially damps pointer-driven gaze while preserving static state, facial expression and lip-sync cues.
 
 ### Safety
 - The new endpoint does not expose raw personal-memory text, raw audit detail, internal memory IDs, or correlation IDs.
 - Reuses the existing owner-management permission boundary; no new secret or authentication bypass was introduced.
+- Avatar motion policy is presentation-only and contains no chat/network/Vayu reasoning path.
 - No Vayu reasoning, planning, retrieval, tool/agent orchestration or execution behavior changed.
 - No consequential-action approval behavior changed.
 - No new database schema or runtime dependency was introduced.
